@@ -1,3 +1,4 @@
+using AVritmica.BD.Data;
 using Microsoft.EntityFrameworkCore;
 
 //--------------------------------------------------------------------------------------
