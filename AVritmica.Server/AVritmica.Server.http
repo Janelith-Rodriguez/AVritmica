@@ -1,0 +1,6 @@
+@AVritmica.Server_HostAddress = http://localhost:5226
+
+GET {{AVritmica.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
