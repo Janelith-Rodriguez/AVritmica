@@ -12,11 +12,13 @@ namespace AVritmica.BD.Data.Entity
     public class Categoria : EntityBase
     {
         [Required(ErrorMessage = "El nombre de la categoria es obligatorio")]
-        [MaxLength(100, ErrorMessage = "Maximo numero de caracteres{1}.")]
+        [MaxLength(100, ErrorMessage = "El nombre tiene como máximo{1} caracteres.")]
         public string Nombre { get; set; }
 
-        [Required(ErrorMessage = "La descripción de la categoria es obligatorio")]
-        [MaxLength(150, ErrorMessage = "Maximo numero de caracteres{1}.")]
+        //[Required(ErrorMessage = "La descripción de la categoria es obligatorio")]
+        [MaxLength(200, ErrorMessage = "La descripción puede tener como máximo{1} caracteres.")]
         public string Descripcion { get; set; }
+
+        public List<Producto> Productos { get; set; }
     }
 }

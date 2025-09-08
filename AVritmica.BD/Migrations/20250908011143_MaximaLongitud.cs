@@ -36,29 +36,11 @@ namespace AVritmica.BD.Migrations
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "nvarchar(450)");
-
-            migrationBuilder.AlterColumn<string>(
-                name: "Nombre",
-                table: "Categorias",
-                type: "nvarchar(450)",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)");
-
-            migrationBuilder.CreateIndex(
-                name: "Categoria_UQ",
-                table: "Categorias",
-                column: "Nombre",
-                unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "Categoria_UQ",
-                table: "Categorias");
-
             migrationBuilder.AlterColumn<string>(
                 name: "Nombre",
                 table: "Productos",
@@ -85,14 +67,6 @@ namespace AVritmica.BD.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(200)",
                 oldMaxLength: 200);
-
-            migrationBuilder.AlterColumn<string>(
-                name: "Nombre",
-                table: "Categorias",
-                type: "nvarchar(max)",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(450)");
         }
     }
 }

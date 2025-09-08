@@ -5,36 +5,33 @@
 namespace AVritmica.BD.Migrations
 {
     /// <inheritdoc />
-    public partial class IndicesdeProducto : Migration
+    public partial class MaximaLongitudCategoria : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<string>(
                 name: "Nombre",
-                table: "Productos",
-                type: "nvarchar(450)",
+                table: "Categorias",
+                type: "nvarchar(100)",
+                maxLength: 100,
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "nvarchar(max)");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Descripcion",
-                table: "Productos",
-                type: "nvarchar(450)",
+                table: "Categorias",
+                type: "nvarchar(200)",
+                maxLength: 200,
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "nvarchar(max)");
 
             migrationBuilder.CreateIndex(
-                name: "Producto_Precio",
-                table: "Productos",
-                columns: new[] { "Precio", "Descripcion" });
-
-            migrationBuilder.CreateIndex(
-                name: "Producto_UQ",
-                table: "Productos",
-                columns: new[] { "CategotiaId", "Nombre" },
+                name: "Categoria_UQ",
+                table: "Categorias",
+                column: "Nombre",
                 unique: true);
         }
 
@@ -42,28 +39,26 @@ namespace AVritmica.BD.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropIndex(
-                name: "Producto_Precio",
-                table: "Productos");
-
-            migrationBuilder.DropIndex(
-                name: "Producto_UQ",
-                table: "Productos");
+                name: "Categoria_UQ",
+                table: "Categorias");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Nombre",
-                table: "Productos",
+                table: "Categorias",
                 type: "nvarchar(max)",
                 nullable: false,
                 oldClrType: typeof(string),
-                oldType: "nvarchar(450)");
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100);
 
             migrationBuilder.AlterColumn<string>(
                 name: "Descripcion",
-                table: "Productos",
+                table: "Categorias",
                 type: "nvarchar(max)",
                 nullable: false,
                 oldClrType: typeof(string),
-                oldType: "nvarchar(450)");
+                oldType: "nvarchar(200)",
+                oldMaxLength: 200);
         }
     }
 }

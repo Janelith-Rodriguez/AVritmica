@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AVritmica.BD.Migrations
 {
     [DbContext(typeof(Context))]
-    [Migration("20250907231248_IndicesdeProducto")]
+    [Migration("20250908010751_IndicesdeProducto")]
     partial class IndicesdeProducto
     {
         /// <inheritdoc />
@@ -56,9 +56,6 @@ namespace AVritmica.BD.Migrations
                     b.Property<int>("CategoriaId")
                         .HasColumnType("int");
 
-                    b.Property<int>("CategotiaId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -79,11 +76,9 @@ namespace AVritmica.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoriaId");
-
                     b.HasIndex(new[] { "Precio", "Descripcion" }, "Producto_Precio");
 
-                    b.HasIndex(new[] { "CategotiaId", "Nombre" }, "Producto_UQ")
+                    b.HasIndex(new[] { "CategoriaId", "Nombre" }, "Producto_UQ")
                         .IsUnique();
 
                     b.ToTable("Productos");

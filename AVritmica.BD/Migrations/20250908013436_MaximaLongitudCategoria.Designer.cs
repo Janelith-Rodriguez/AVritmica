@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AVritmica.BD.Migrations
 {
     [DbContext(typeof(Context))]
-    [Migration("20250907233336_MaximaLongitud")]
-    partial class MaximaLongitud
+    [Migration("20250908013436_MaximaLongitudCategoria")]
+    partial class MaximaLongitudCategoria
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,11 +34,13 @@ namespace AVritmica.BD.Migrations
 
                     b.Property<string>("Descripcion")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
@@ -57,9 +59,6 @@ namespace AVritmica.BD.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CategoriaId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CategotiaId")
                         .HasColumnType("int");
 
                     b.Property<string>("Descripcion")
@@ -85,11 +84,9 @@ namespace AVritmica.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoriaId");
-
                     b.HasIndex(new[] { "Precio", "Descripcion" }, "Producto_Precio");
 
-                    b.HasIndex(new[] { "CategotiaId", "Nombre" }, "Producto_UQ")
+                    b.HasIndex(new[] { "CategoriaId", "Nombre" }, "Producto_UQ")
                         .IsUnique();
 
                     b.ToTable("Productos");

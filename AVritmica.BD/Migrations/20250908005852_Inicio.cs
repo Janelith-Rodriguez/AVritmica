@@ -35,7 +35,6 @@ namespace AVritmica.BD.Migrations
                     Precio = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Stock = table.Column<int>(type: "int", nullable: false),
                     Imagen_Url = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CategotiaId = table.Column<int>(type: "int", nullable: false),
                     CategoriaId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
