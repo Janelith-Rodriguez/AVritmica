@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AVritmica.BD.Migrations
 {
     [DbContext(typeof(Context))]
-    [Migration("20250907204302_PrimerasTablas")]
-    partial class PrimerasTablas
+    [Migration("20250907231248_IndicesdeProducto")]
+    partial class IndicesdeProducto
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,9 +53,51 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CategoriaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategotiaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Imagen_Url")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("Precio")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Stock")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex(new[] { "Precio", "Descripcion" }, "Producto_Precio");
+
+                    b.HasIndex(new[] { "CategotiaId", "Nombre" }, "Producto_UQ")
+                        .IsUnique();
+
                     b.ToTable("Productos");
+                });
+
+            modelBuilder.Entity("AVritmica.BD.Data.Entity.Producto", b =>
+                {
+                    b.HasOne("AVritmica.BD.Data.Entity.Categoria", "Categoria")
+                        .WithMany()
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Categoria");
                 });
 #pragma warning restore 612, 618
         }
