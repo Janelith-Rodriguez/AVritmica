@@ -8,16 +8,14 @@ using System.Threading.Tasks;
 
 namespace AVritmica.BD.Data.Entity
 {
-    [Index(nameof(FechaCompra), Name = "Compra_UQ", IsUnique = true)]
+    [Index(nameof(FechaCompra), Name = "IX_Compras_FechaCompra")]
     public class Compra : EntityBase
     {
-        [Required(ErrorMessage = "La fecha de la compra es obligatoria")]
-        public DateTime FechaCompra { get; set; }
+        public DateTime FechaCompra { get; set; } = DateTime.UtcNow;
 
-        [MaxLength(200, ErrorMessage = "La descripción tiene como máximo{1} caracteres.")]
-        public string Descripcion { get; set; }
+        public string Descripcion { get; set; } = string.Empty;
 
-        // Relación con CompraDetalle
-        public List<CompraDetalle> CompraDetalles { get; set; }
+        // Propiedad de navegación
+        public virtual ICollection<CompraDetalle> CompraDetalles { get; set; } = new List<CompraDetalle>();
     }
 }

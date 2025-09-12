@@ -8,26 +8,28 @@ using System.Threading.Tasks;
 
 namespace AVritmica.BD.Data.Entity
 {
-    [Index(nameof(Nombre), Name = "Consulta_UQ", IsUnique = true)]
+    [Index(nameof(UsuarioId), Name = "IX_Consultas_IdUsuario")]
+    [Index(nameof(Email), Name = "IX_Consultas_Email")]
+    [Index(nameof(FechaEnvio), Name = "IX_Consultas_FechaEnvio")]
     public class Consulta : EntityBase
     {
-        [Required(ErrorMessage = "El usuario es obligatorio")]
+        // Clave foránea
         public int UsuarioId { get; set; }
-        public Usuario Usuario { get; set; }
 
-        [Required(ErrorMessage = "El nombre de la consulta es obligatorio")]
-        [MaxLength(100, ErrorMessage = "El nombre tiene como máximo{1} caracteres.")]
-        public string Nombre { get; set; }
+        [Required]
+        [MaxLength(100)]
+        public string Nombre { get; set; } = string.Empty;
 
-        [EmailAddress(ErrorMessage = "Formato de correo inválido")]
-        [MaxLength(150, ErrorMessage = "El Mail puede tener como máximo{1} caracteres.")]
-        public string Email { get; set; }
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "El mensaje de la consulta es obligatorio")]
-        [MaxLength(500, ErrorMessage = "El mensaje tiene como máximo{1} caracteres.")]
-        public string Mensaje { get; set; }
+        [Required]
+        public string Mensaje { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "La fecha de envio es obligatorio")]
-        public DateTime Fecha_Envio { get; set; }
+        public DateTime FechaEnvio { get; set; } = DateTime.UtcNow;
+
+        // Propiedad de navegación
+        public virtual Usuario Usuario { get; set; }
     }
 }

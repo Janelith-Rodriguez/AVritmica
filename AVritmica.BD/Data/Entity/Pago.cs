@@ -2,35 +2,40 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace AVritmica.BD.Data.Entity
 {
-    [Index(nameof(FechaPago), Name = "Pago_UQ", IsUnique = true)]
+    [Index(nameof(CarritoId), Name = "IX_Pagos_IdCarrito")]
+    [Index(nameof(FechaPago), Name = "IX_Pagos_FechaPago")]
+    [Index(nameof(EstadoPago), Name = "IX_Pagos_EstadoPago")]
     public class Pago : EntityBase
     {
-        // FK
-        [Required(ErrorMessage = "El carrito es obligatoria")]
+        // Clave foránea
         public int CarritoId { get; set; }
-        public Carrito Carrito { get; set; }
 
-        [Required(ErrorMessage = "La fecha de pago es obligatorio")]
-        public DateTime FechaPago { get; set; }
+        public DateTime FechaPago { get; set; } = DateTime.UtcNow;
 
-        [Required(ErrorMessage = "El método de pago es obligatorio")]
-        [MaxLength(100, ErrorMessage = "Máximo {1} caracteres.")]
-        public string MetodoPago { get; set; }
+        [Required]
+        [MaxLength(50)]
+        public string MetodoPago { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "El monto pagado es obligatorio")]
+        [DataType(DataType.Currency)]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal MontoPagado { get; set; }
 
-        [Required(ErrorMessage = "El estado del pago es obligatorio")]
-        [MaxLength(100, ErrorMessage = "Máximo {1} caracteres.")]
-        public string EstadoPago { get; set; }
+        [Required]
+        [MaxLength(20)]
+        public string EstadoPago { get; set; } = "Completado";
 
-        [Required(ErrorMessage = "El saldo es obligatorio")]    
+        [DataType(DataType.Currency)]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Saldo { get; set; }
+
+        // Propiedad de navegación
+        public virtual Carrito Carrito { get; set; }
     }
 }

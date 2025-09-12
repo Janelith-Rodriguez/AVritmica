@@ -2,32 +2,33 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace AVritmica.BD.Data.Entity
 {
-    [Index(nameof(CompraId), nameof(ProductoId), Name = "CompraDetalle_UQ", IsUnique = true)]
+    [Index(nameof(CompraId), Name = "IX_CompraDetalle_IdCompra")]
+    [Index(nameof(ProductoId), Name = "IX_CompraDetalle_IdProducto")]
     public class CompraDetalle : EntityBase
     {
-        // FK con Compra
-        [Required(ErrorMessage = "La compra es obligatoria")]
+        // Claves foráneas
         public int CompraId { get; set; }
-        public Compra Compra { get; set; }
-
-        // FK con Producto
-        [Required(ErrorMessage = "El producto es obligatorio")]
         public int ProductoId { get; set; }
-        public Producto Producto { get; set; }
 
-        [Required(ErrorMessage = "La cantidad es obligatoria")]
         public int Cantidad { get; set; }
 
-        [Required(ErrorMessage = "El precio de compra es obligatorio")]
+        [DataType(DataType.Currency)]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal PrecioCompra { get; set; }
 
-        [Required(ErrorMessage = "El precio de venta actualizado es obligatorio")]
-        public decimal Precio_Venta_Actualizado { get; set; }
+        [DataType(DataType.Currency)]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal PrecioVentaActualizado { get; set; }
+
+        // Propiedades de navegación
+        public virtual Compra Compra { get; set; }
+        public virtual Producto Producto { get; set; }
     }
 }

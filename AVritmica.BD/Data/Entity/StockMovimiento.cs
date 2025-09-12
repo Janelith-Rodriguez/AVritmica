@@ -8,25 +8,24 @@ using System.Threading.Tasks;
 
 namespace AVritmica.BD.Data.Entity
 {
-    [Index(nameof(TipoMovimiento), Name = "StockMovimiento_UQ", IsUnique = true)]
+    [Index(nameof(ProductoId), Name = "IX_StockMovimientos_ProductoId")]
+    [Index(nameof(TipoMovimiento), Name = "IX_StockMovimientos_TipoMovimiento")]
     public class StockMovimiento : EntityBase
     {
-        // FK
-        [Required(ErrorMessage = "El producto es obligatoria")]
+        // Clave foránea
         public int ProductoId { get; set; }
-        public Producto Producto { get; set; }
 
-        [Required(ErrorMessage = "El tipo de movimiento es obligatorio")]
-        [MaxLength(50, ErrorMessage = "Máximo {1} caracteres.")]
-        public string TipoMovimiento { get; set; }
+        [Required]
+        [MaxLength(50)]
+        public string TipoMovimiento { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "La cantidad es obligatoria")]
         public int Cantidad { get; set; }
 
-        [Required(ErrorMessage = "La fecha es obligatoria")]
-        public DateTime Fecha { get; set; }
+        public DateTime Fecha { get; set; } = DateTime.UtcNow;
 
-        [MaxLength(500, ErrorMessage = "Máximo {1} caracteres.")]
-        public string Descripcion { get; set; }
+        public string Descripcion { get; set; } = string.Empty;
+
+        // Propiedad de navegación
+        public virtual Producto Producto { get; set; }
     }
 }

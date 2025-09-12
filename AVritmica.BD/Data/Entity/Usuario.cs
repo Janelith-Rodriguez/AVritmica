@@ -8,40 +8,35 @@ using System.Threading.Tasks;
 
 namespace AVritmica.BD.Data.Entity
 {
-    [Index(nameof(Email), Name = "Usuario_UQ", IsUnique = true)]
+    [Index(nameof(Email), IsUnique = true, Name = "IX_Usuarios_Email")]
+    [Index(nameof(TipoUsuario), Name = "IX_Usuarios_TipoUsuario")]
     public class Usuario : EntityBase
     {
-        [Required(ErrorMessage = "El nombre del usuario es obligatorio")]
-        [MaxLength(100, ErrorMessage = "El nombre tiene como máximo{1} caracteres.")]        
-        public string Nombre { get; set; }
+        [Required]
+        [MaxLength(100)]
+        public string Nombre { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "El Apellido del usuario es obligatorio")]
-        [MaxLength(100, ErrorMessage = "El Apellido tiene como máximo{1} caracteres.")]
-        public string Apellido { get; set; }
+        [MaxLength(100)]
+        public string Apellido { get; set; } = string.Empty;
 
-        [EmailAddress(ErrorMessage = "Formato incorecto de mail")]
-        [MaxLength(150, ErrorMessage = "El Mail puede tener como máximo {1} caracteres.")]
-        public string Email { get; set; }
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "La contraseña del usuario es obligatorio")]
-        [MaxLength(200, ErrorMessage = "La contraseña puede tener como máximo{1} caracteres.")]
-        public string Contrasena { get; set; }
+        [Required]
+        public string Contrasena { get; set; } = string.Empty;
 
-        [Phone(ErrorMessage = "Formato incorrecto de numeración de teléfono")]
-        [MaxLength(20, ErrorMessage = "El Número de Teléfono/celular puede tener como máximo {1} caracteres.")]
-        public string Telefono { get; set; }
+        [Phone]
+        public string Telefono { get; set; } = string.Empty;
 
-        [MaxLength(250, ErrorMessage = "La direccion tiene como máximo{1} caracteres.")]
-        public string Direccion { get; set; }
+        public string Direccion { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "El tipo de usuario es obligatorio")]
-        [MaxLength(50, ErrorMessage = "El  tipo de usuario puede tener como máximo{1} caracteres.")]
-        public string TipoUsuario { get; set; }
+        [Required]
+        public string TipoUsuario { get; set; } = "Cliente";
 
-        // Relación: un usuario puede tener muchas Compras, Carritos y Consultas
-        public List<Compra> Compras { get; set; }
-        public List<Carrito> Carritos { get; set; } 
-        public List<Consulta> Consultas { get; set; }
-        
+        // Propiedades de navegación
+        public virtual ICollection<Carrito> Carritos { get; set; } = new List<Carrito>();
+        public virtual ICollection<Consulta> Consultas { get; set; } = new List<Consulta>();
+
     }
 }

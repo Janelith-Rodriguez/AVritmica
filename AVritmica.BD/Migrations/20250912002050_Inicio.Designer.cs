@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AVritmica.BD.Migrations
 {
     [DbContext(typeof(Context))]
-    [Migration("20250908042305_BaseV1")]
-    partial class BaseV1
+    [Migration("20250912002050_Inicio")]
+    partial class Inicio
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,13 +33,9 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
                     b.Property<string>("DireccionEnvio")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Estado")
                         .IsRequired()
@@ -48,10 +44,10 @@ namespace AVritmica.BD.Migrations
 
                     b.Property<string>("EstadoPago")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
-                    b.Property<DateTime>("FechaConfirmacion")
+                    b.Property<DateTime?>("FechaConfirmacion")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("FechaCreacion")
@@ -68,10 +64,13 @@ namespace AVritmica.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UsuarioId");
+                    b.HasIndex(new[] { "Estado" }, "IX_Carritos_Estado");
 
-                    b.HasIndex(new[] { "FechaCreacion" }, "Carrito_UQ")
-                        .IsUnique();
+                    b.HasIndex(new[] { "EstadoPago" }, "IX_Carritos_EstadoPago");
+
+                    b.HasIndex(new[] { "FechaCreacion" }, "IX_Carritos_FechaCreacion");
+
+                    b.HasIndex(new[] { "UsuarioId" }, "IX_Carritos_UsuarioId");
 
                     b.ToTable("Carritos");
                 });
@@ -83,9 +82,6 @@ namespace AVritmica.BD.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
 
                     b.Property<int>("Cantidad")
                         .HasColumnType("int");
@@ -101,10 +97,12 @@ namespace AVritmica.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductoId");
+                    b.HasIndex(new[] { "CarritoId" }, "IX_CarritoProductos_CarritoId");
 
-                    b.HasIndex(new[] { "CarritoId", "ProductoId" }, "CarritoProducto_UQ")
+                    b.HasIndex(new[] { "CarritoId", "ProductoId" }, "IX_CarritoProductos_CarritoProducto")
                         .IsUnique();
+
+                    b.HasIndex(new[] { "ProductoId" }, "IX_CarritoProductos_ProductoId");
 
                     b.ToTable("CarritoProductos");
                 });
@@ -117,13 +115,9 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Descripcion")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -132,7 +126,7 @@ namespace AVritmica.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "Nombre" }, "Categoria_UQ")
+                    b.HasIndex(new[] { "Nombre" }, "IX_Categorias_Nombre")
                         .IsUnique();
 
                     b.ToTable("Categorias");
@@ -146,26 +140,16 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Descripcion")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("FechaCompra")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("UsuarioId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UsuarioId");
-
-                    b.HasIndex(new[] { "FechaCompra" }, "Compra_UQ")
-                        .IsUnique();
+                    b.HasIndex(new[] { "FechaCompra" }, "IX_Compras_FechaCompra");
 
                     b.ToTable("Compras");
                 });
@@ -178,9 +162,6 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
                     b.Property<int>("Cantidad")
                         .HasColumnType("int");
 
@@ -190,7 +171,7 @@ namespace AVritmica.BD.Migrations
                     b.Property<decimal>("PrecioCompra")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("Precio_Venta_Actualizado")
+                    b.Property<decimal>("PrecioVentaActualizado")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductoId")
@@ -198,10 +179,9 @@ namespace AVritmica.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductoId");
+                    b.HasIndex(new[] { "CompraId" }, "IX_CompraDetalle_IdCompra");
 
-                    b.HasIndex(new[] { "CompraId", "ProductoId" }, "CompraDetalle_UQ")
-                        .IsUnique();
+                    b.HasIndex(new[] { "ProductoId" }, "IX_CompraDetalle_IdProducto");
 
                     b.ToTable("CompraDetalles");
                 });
@@ -214,21 +194,16 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("Fecha_Envio")
+                    b.Property<DateTime>("FechaEnvio")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Mensaje")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -240,10 +215,11 @@ namespace AVritmica.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UsuarioId");
+                    b.HasIndex(new[] { "Email" }, "IX_Consultas_Email");
 
-                    b.HasIndex(new[] { "Nombre" }, "Consulta_UQ")
-                        .IsUnique();
+                    b.HasIndex(new[] { "FechaEnvio" }, "IX_Consultas_FechaEnvio");
+
+                    b.HasIndex(new[] { "UsuarioId" }, "IX_Consultas_IdUsuario");
 
                     b.ToTable("Consultas");
                 });
@@ -256,24 +232,21 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
                     b.Property<int>("CarritoId")
                         .HasColumnType("int");
 
                     b.Property<string>("EstadoPago")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime>("FechaPago")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("MetodoPago")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("MontoPagado")
                         .HasColumnType("decimal(18,2)");
@@ -283,10 +256,11 @@ namespace AVritmica.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CarritoId");
+                    b.HasIndex(new[] { "EstadoPago" }, "IX_Pagos_EstadoPago");
 
-                    b.HasIndex(new[] { "FechaPago" }, "Pago_UQ")
-                        .IsUnique();
+                    b.HasIndex(new[] { "FechaPago" }, "IX_Pagos_FechaPago");
+
+                    b.HasIndex(new[] { "CarritoId" }, "IX_Pagos_IdCarrito");
 
                     b.ToTable("Pagos");
                 });
@@ -307,18 +281,16 @@ namespace AVritmica.BD.Migrations
 
                     b.Property<string>("Descripcion")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Imagen_Url")
+                    b.Property<string>("ImagenUrl")
                         .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal>("Precio")
                         .HasColumnType("decimal(18,2)");
@@ -328,10 +300,13 @@ namespace AVritmica.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "Precio", "Descripcion" }, "Producto_Precio");
+                    b.HasIndex(new[] { "Activo" }, "IX_Productos_Activo");
 
-                    b.HasIndex(new[] { "CategoriaId", "Nombre" }, "Producto_UQ")
-                        .IsUnique();
+                    b.HasIndex(new[] { "CategoriaId" }, "IX_Productos_IdCategoria");
+
+                    b.HasIndex(new[] { "Nombre" }, "IX_Productos_Nombre");
+
+                    b.HasIndex(new[] { "Precio" }, "IX_Productos_Precio");
 
                     b.ToTable("Productos");
                 });
@@ -344,16 +319,12 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
                     b.Property<int>("Cantidad")
                         .HasColumnType("int");
 
                     b.Property<string>("Descripcion")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime2");
@@ -368,10 +339,9 @@ namespace AVritmica.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductoId");
+                    b.HasIndex(new[] { "ProductoId" }, "IX_StockMovimientos_ProductoId");
 
-                    b.HasIndex(new[] { "TipoMovimiento" }, "StockMovimiento_UQ")
-                        .IsUnique();
+                    b.HasIndex(new[] { "TipoMovimiento" }, "IX_StockMovimientos_TipoMovimiento");
 
                     b.ToTable("StockMovimientos");
                 });
@@ -384,9 +354,6 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Apellido")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -394,18 +361,15 @@ namespace AVritmica.BD.Migrations
 
                     b.Property<string>("Contrasena")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Direccion")
                         .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -414,18 +378,18 @@ namespace AVritmica.BD.Migrations
 
                     b.Property<string>("Telefono")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TipoUsuario")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "Email" }, "Usuario_UQ")
+                    b.HasIndex(new[] { "Email" }, "IX_Usuarios_Email")
                         .IsUnique();
+
+                    b.HasIndex(new[] { "TipoUsuario" }, "IX_Usuarios_TipoUsuario");
 
                     b.ToTable("Usuarios");
                 });
@@ -458,13 +422,6 @@ namespace AVritmica.BD.Migrations
                     b.Navigation("Carrito");
 
                     b.Navigation("Producto");
-                });
-
-            modelBuilder.Entity("AVritmica.BD.Data.Entity.Compra", b =>
-                {
-                    b.HasOne("AVritmica.BD.Data.Entity.Usuario", null)
-                        .WithMany("Compras")
-                        .HasForeignKey("UsuarioId");
                 });
 
             modelBuilder.Entity("AVritmica.BD.Data.Entity.CompraDetalle", b =>
@@ -559,8 +516,6 @@ namespace AVritmica.BD.Migrations
             modelBuilder.Entity("AVritmica.BD.Data.Entity.Usuario", b =>
                 {
                     b.Navigation("Carritos");
-
-                    b.Navigation("Compras");
 
                     b.Navigation("Consultas");
                 });
