@@ -13,7 +13,6 @@ namespace AVritmica.BD.Data.Entity
     [Index(nameof(Nombre), Name = "IX_Productos_Nombre")]
     [Index(nameof(CategoriaId), Name = "IX_Productos_IdCategoria")]
     [Index(nameof(Precio), Name = "IX_Productos_Precio")]
-    [Index(nameof(Activo), Name = "IX_Productos_Activo")]
     public class Producto : EntityBase
     {
         [Required]
@@ -31,15 +30,13 @@ namespace AVritmica.BD.Data.Entity
 
         public string ImagenUrl { get; set; } = string.Empty;
 
-        public bool Activo { get; set; } = true;
         // Clave foránea
         public int CategoriaId { get; set; }
+        public Categoria Categoria { get; set; }
 
-        // Propiedad de navegación
-        public virtual Categoria Categoria { get; set; }
-        public virtual ICollection<CarritoProducto> CarritoProductos { get; set; } = new List<CarritoProducto>();
-        public virtual ICollection<StockMovimiento> StockMovimientos { get; set; } = new List<StockMovimiento>();
-        public virtual ICollection<CompraDetalle> CompraDetalles { get; set; } = new List<CompraDetalle>();
+        public List<CarritoProducto> CarritoProductos { get; set; } = new List<CarritoProducto>();
+        public List<StockMovimiento> StockMovimientos { get; set; } = new List<StockMovimiento>();
+        public List<CompraDetalle> CompraDetalles { get; set; } = new List<CompraDetalle>();
     }
 }
 

@@ -18,7 +18,8 @@ namespace AVritmica.BD.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Nombre = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -32,7 +33,8 @@ namespace AVritmica.BD.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FechaCompra = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -51,7 +53,8 @@ namespace AVritmica.BD.Migrations
                     Contrasena = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Telefono = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Direccion = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TipoUsuario = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    TipoUsuario = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -69,8 +72,8 @@ namespace AVritmica.BD.Migrations
                     Precio = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Stock = table.Column<int>(type: "int", nullable: false),
                     ImagenUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Activo = table.Column<bool>(type: "bit", nullable: false),
-                    CategoriaId = table.Column<int>(type: "int", nullable: false)
+                    CategoriaId = table.Column<int>(type: "int", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -96,7 +99,8 @@ namespace AVritmica.BD.Migrations
                     EstadoPago = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     MontoTotal = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Saldo = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    DireccionEnvio = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    DireccionEnvio = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -119,7 +123,8 @@ namespace AVritmica.BD.Migrations
                     Nombre = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Mensaje = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FechaEnvio = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    FechaEnvio = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -142,7 +147,8 @@ namespace AVritmica.BD.Migrations
                     ProductoId = table.Column<int>(type: "int", nullable: false),
                     Cantidad = table.Column<int>(type: "int", nullable: false),
                     PrecioCompra = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    PrecioVentaActualizado = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    PrecioVentaActualizado = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -171,7 +177,8 @@ namespace AVritmica.BD.Migrations
                     TipoMovimiento = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Cantidad = table.Column<int>(type: "int", nullable: false),
                     Fecha = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -193,7 +200,8 @@ namespace AVritmica.BD.Migrations
                     CarritoId = table.Column<int>(type: "int", nullable: false),
                     ProductoId = table.Column<int>(type: "int", nullable: false),
                     Cantidad = table.Column<int>(type: "int", nullable: false),
-                    PrecioUnitario = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    PrecioUnitario = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -223,7 +231,8 @@ namespace AVritmica.BD.Migrations
                     MetodoPago = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     MontoPagado = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     EstadoPago = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Saldo = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    Saldo = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -322,11 +331,6 @@ namespace AVritmica.BD.Migrations
                 name: "IX_Pagos_IdCarrito",
                 table: "Pagos",
                 column: "CarritoId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Productos_Activo",
-                table: "Productos",
-                column: "Activo");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Productos_IdCategoria",

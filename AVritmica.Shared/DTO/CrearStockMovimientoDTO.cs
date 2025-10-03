@@ -1,20 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AVritmica.BD.Data.Entity
+namespace AVritmica.Shared.DTO
 {
-    [Index(nameof(ProductoId), Name = "IX_StockMovimientos_ProductoId")]
-    [Index(nameof(TipoMovimiento), Name = "IX_StockMovimientos_TipoMovimiento")]
-    public class StockMovimiento : EntityBase
+    public class CrearStockMovimientoDTO
     {
         // Clave foránea
-        public int ProductoId { get; set; }
-        public Producto Producto { get; set; }
+        //public int ProductoId { get; set; }
+        //public Producto Producto { get; set; }
 
         [Required]
         [MaxLength(50)]

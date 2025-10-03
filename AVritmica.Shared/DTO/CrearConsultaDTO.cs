@@ -1,21 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AVritmica.BD.Data.Entity
+namespace AVritmica.Shared.DTO
 {
-    [Index(nameof(UsuarioId), Name = "IX_Consultas_IdUsuario")]
-    [Index(nameof(Email), Name = "IX_Consultas_Email")]
-    [Index(nameof(FechaEnvio), Name = "IX_Consultas_FechaEnvio")]
-    public class Consulta : EntityBase
+    public class CrearConsultaDTO
     {
         // Clave foránea
-        public int UsuarioId { get; set; }
-        public Usuario Usuario { get; set; }
+        //public int UsuarioId { get; set; }
+        //public Usuario Usuario { get; set; }
 
         [Required]
         [MaxLength(100)]

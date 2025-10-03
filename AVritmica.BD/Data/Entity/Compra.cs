@@ -16,6 +16,6 @@ namespace AVritmica.BD.Data.Entity
         public string Descripcion { get; set; } = string.Empty;
 
         // Propiedad de navegación
-        public virtual ICollection<CompraDetalle> CompraDetalles { get; set; } = new List<CompraDetalle>();
+        public List<CompraDetalle> CompraDetalles { get; set; } = new List<CompraDetalle>();
     }
 }

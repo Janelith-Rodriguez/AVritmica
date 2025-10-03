@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,18 +6,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AVritmica.BD.Data.Entity
+namespace AVritmica.Shared.DTO
 {
-    [Index(nameof(CompraId), Name = "IX_CompraDetalle_IdCompra")]
-    [Index(nameof(ProductoId), Name = "IX_CompraDetalle_IdProducto")]
-    public class CompraDetalle : EntityBase
+    public class CrearCompraDetalleDTO
     {
-        // Claves foráneas
-        public int CompraId { get; set; }
-        public Compra Compra { get; set; }
 
-        public int ProductoId { get; set; }
-        public Producto Producto { get; set; }
+        // Claves foráneas
+        //public int CompraId { get; set; }
+        //public Compra Compra { get; set; }
+
+        //public int ProductoId { get; set; }
+        //public Producto Producto { get; set; }
 
         public int Cantidad { get; set; }
 

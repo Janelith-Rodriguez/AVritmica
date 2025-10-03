@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,17 +6,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AVritmica.BD.Data.Entity
+namespace AVritmica.Shared.DTO
 {
-    [Index(nameof(UsuarioId), Name = "IX_Carritos_UsuarioId")]
-    [Index(nameof(Estado), Name = "IX_Carritos_Estado")]
-    [Index(nameof(FechaCreacion), Name = "IX_Carritos_FechaCreacion")]
-    [Index(nameof(EstadoPago), Name = "IX_Carritos_EstadoPago")]
-    public class Carrito : EntityBase
+    public class CrearCarritoDTO
     {
         // Clave foránea
-        public int UsuarioId { get; set; }
-        public Usuario Usuario { get; set; }
+        //public int UsuarioId { get; set; }
+        //public Usuario Usuario { get; set; }
 
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
@@ -39,7 +34,5 @@ namespace AVritmica.BD.Data.Entity
         public decimal Saldo { get; set; }
 
         public string DireccionEnvio { get; set; } = string.Empty;
-        public List<CarritoProducto> CarritoProductos { get; set; } = new List<CarritoProducto>();
-        public List<Pago> Pagos { get; set; } = new List<Pago>();
     }
 }

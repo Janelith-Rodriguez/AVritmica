@@ -35,8 +35,8 @@ namespace AVritmica.BD.Data.Entity
         public string TipoUsuario { get; set; } = "Cliente";
 
         // Propiedades de navegación
-        public virtual ICollection<Carrito> Carritos { get; set; } = new List<Carrito>();
-        public virtual ICollection<Consulta> Consultas { get; set; } = new List<Consulta>();
+        public List<Carrito> Carritos { get; set; } = new List<Carrito>();
+        public List<Consulta> Consultas { get; set; } = new List<Consulta>();
 
     }
 }

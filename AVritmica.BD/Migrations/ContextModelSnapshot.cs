@@ -30,6 +30,9 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
                     b.Property<string>("DireccionEnvio")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -80,6 +83,9 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
                     b.Property<int>("Cantidad")
                         .HasColumnType("int");
 
@@ -112,6 +118,9 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -137,6 +146,9 @@ namespace AVritmica.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -158,6 +170,9 @@ namespace AVritmica.BD.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
 
                     b.Property<int>("Cantidad")
                         .HasColumnType("int");
@@ -190,6 +205,9 @@ namespace AVritmica.BD.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -228,6 +246,9 @@ namespace AVritmica.BD.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
 
                     b.Property<int>("CarritoId")
                         .HasColumnType("int");
@@ -297,8 +318,6 @@ namespace AVritmica.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "Activo" }, "IX_Productos_Activo");
-
                     b.HasIndex(new[] { "CategoriaId" }, "IX_Productos_IdCategoria");
 
                     b.HasIndex(new[] { "Nombre" }, "IX_Productos_Nombre");
@@ -315,6 +334,9 @@ namespace AVritmica.BD.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
 
                     b.Property<int>("Cantidad")
                         .HasColumnType("int");
@@ -350,6 +372,9 @@ namespace AVritmica.BD.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Apellido")
                         .IsRequired()
