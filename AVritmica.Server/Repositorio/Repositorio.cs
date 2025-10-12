@@ -6,7 +6,7 @@ namespace AVritmica.Server.Repositorio
     public class Repositorio<E> : IRepositorio<E>
                  where E : class, IEntityBase
     {
-        private readonly Context context;
+        protected readonly Context context;
 
         public Repositorio(Context context)
         {
@@ -19,18 +19,20 @@ namespace AVritmica.Server.Repositorio
                              .AnyAsync(x => x.Id == id);
             return existe;
         }
+
         public async Task<List<E>> Select()
         {
-            return await context.Set<E>().ToListAsync();
+            return await context.Set<E>()
+                .AsNoTracking()
+                .ToListAsync();
         }
 
-        public async Task<E> SelectById(int id)
+        public async Task<E?> SelectById(int id)
         {
-            E? m = await context.Set<E>()
+            E? entidad = await context.Set<E>()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(
-                x => x.Id == id);
-            return m;
+                .FirstOrDefaultAsync(x => x.Id == id);
+            return entidad;
         }
 
         public async Task<int> Insert(E entidad)
@@ -43,7 +45,7 @@ namespace AVritmica.Server.Repositorio
             }
             catch (Exception e)
             {
-                throw e;
+                throw new Exception($"Error al insertar la entidad: {e.Message}", e);
             }
         }
 
@@ -53,41 +55,66 @@ namespace AVritmica.Server.Repositorio
             {
                 return false;
             }
-            var j = await SelectById(id);
-            //.Where(reg => reg.Id == id)
-            //.FirstOrDefaultAsync();
 
-            if (j == null)
+            var entidadExistente = await context.Set<E>()
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (entidadExistente == null)
             {
                 return false;
             }
+
             try
             {
-                context.Set<E>().Update(entidad);
+                context.Entry(entidadExistente).CurrentValues.SetValues(entidad);
                 await context.SaveChangesAsync();
                 return true;
             }
-
             catch (Exception e)
             {
-                throw e;
+                throw new Exception($"Error al actualizar la entidad: {e.Message}", e);
             }
         }
 
         public async Task<bool> Delete(int id)
         {
-            var A = await SelectById(id);
+            var entidad = await context.Set<E>()
+                .FirstOrDefaultAsync(x => x.Id == id);
 
-            if (A != null)
+            if (entidad == null) // CORRECCIÓN: Verificar si ES null
             {
                 return false;
             }
 
-            context.Set<E>().Remove(A);
-            await context.SaveChangesAsync();
-            return true;
-
+            try
+            {
+                context.Set<E>().Remove(entidad);
+                await context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Error al eliminar la entidad: {e.Message}", e);
+            }
         }
 
+        // Métodos adicionales útiles
+        public virtual IQueryable<E> GetQueryable()
+        {
+            return context.Set<E>().AsQueryable();
+        }
+
+        public async Task<bool> Existe(Func<E, bool> predicate)
+        {
+            return await Task.Run(() => context.Set<E>().Any(predicate));
+        }
+
+        public async Task<List<E>> Select(Func<E, bool> predicate)
+        {
+            return await Task.Run(() => context.Set<E>()
+                .AsNoTracking()
+                .Where(predicate)
+                .ToList());
+        }
     }
 }

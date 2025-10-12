@@ -1,109 +1,156 @@
-﻿using AutoMapper;
-using AVritmica.BD.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using AVritmica.BD.Data.Entity;
 using AVritmica.Server.Repositorio;
-using AVritmica.Shared.DTO;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AVritmica.Server.Controllers
 {
     [ApiController]
     [Route("api/CarritoProductos")]
-    public class CarritoProductosControllers : ControllerBase
+    public class CarritoProductosController : ControllerBase
     {
         private readonly ICarritoProductoRepositorio repositorio;
-        //private readonly Context context;
-        private readonly IMapper mapper;
 
-        public CarritoProductosControllers(ICarritoProductoRepositorio repositorio, 
-                                           IMapper mapper)
+        public CarritoProductosController(ICarritoProductoRepositorio repositorio)
         {
             this.repositorio = repositorio;
-            //this.context = context;
-            this.mapper = mapper;
         }
 
-        // GET: api/CarritoProductos
-        [HttpGet]
+        [HttpGet]    // api/CarritoProductos
         public async Task<ActionResult<List<CarritoProducto>>> Get()
         {
             return await repositorio.Select();
         }
 
-        // GET: api/CarritoProductos/2
-        [HttpGet("{id:int}")]
+        /// <summary>
+        /// Endpoint para obtener un producto del carrito por ID
+        /// </summary>
+        /// <param name="id">Id del carrito producto</param>
+        /// <returns></returns>
+        [HttpGet("{id:int}")] // api/CarritoProductos/2
         public async Task<ActionResult<CarritoProducto>> Get(int id)
         {
-            CarritoProducto? cp = await repositorio.SelectById(id);
-
-            if (cp == null)
+            CarritoProducto? carritoProducto = await repositorio.SelectById(id);
+            if (carritoProducto == null)
             {
                 return NotFound();
             }
-
-            return cp;
+            return carritoProducto;
         }
 
-        [HttpGet("existe/{id:int}")] //api/CarritoProductos/existe/2
+        [HttpGet("GetByCarrito/{carritoId:int}")] // api/CarritoProductos/GetByCarrito/1
+        public async Task<ActionResult<List<CarritoProducto>>> GetByCarrito(int carritoId)
+        {
+            var carritoProductos = await repositorio.SelectByCarrito(carritoId);
+            return carritoProductos;
+        }
+
+        [HttpGet("GetByProducto/{productoId:int}")] // api/CarritoProductos/GetByProducto/1
+        public async Task<ActionResult<List<CarritoProducto>>> GetByProducto(int productoId)
+        {
+            var carritoProductos = await repositorio.SelectByProducto(productoId);
+            return carritoProductos;
+        }
+
+        [HttpGet("GetByCarritoAndProducto")] // api/CarritoProductos/GetByCarritoAndProducto?carritoId=1&productoId=2
+        public async Task<ActionResult<CarritoProducto>> GetByCarritoAndProducto([FromQuery] int carritoId, [FromQuery] int productoId)
+        {
+            CarritoProducto? carritoProducto = await repositorio.SelectByCarritoAndProducto(carritoId, productoId);
+            if (carritoProducto == null)
+            {
+                return NotFound();
+            }
+            return carritoProducto;
+        }
+
+        [HttpGet("existe/{id:int}")] // api/CarritoProductos/existe/2
         public async Task<ActionResult<bool>> Existe(int id)
         {
-            var existe = await repositorio.Existe(id);
-            return existe;
+            return await repositorio.Existe(id);
         }
 
-        // POST: api/CarritoProductos
-        [HttpPost]
-        public async Task<ActionResult<int>> Post(CrearCarritoProductoDTO entidadDTO)
+        [HttpGet("existeCombinacion")] // api/CarritoProductos/existeCombinacion?carritoId=1&productoId=2
+        public async Task<ActionResult<bool>> ExisteCombinacion([FromQuery] int carritoId, [FromQuery] int productoId)
+        {
+            return await repositorio.Existe(carritoId, productoId);
+        }
+
+        [HttpGet("cantidadTotalEnCarritos/{productoId:int}")] // api/CarritoProductos/cantidadTotalEnCarritos/1
+        public async Task<ActionResult<int>> CantidadTotalEnCarritos(int productoId)
+        {
+            var cantidad = await repositorio.ObtenerCantidadTotalEnCarritos(productoId);
+            return cantidad;
+        }
+
+        [HttpPost("actualizar-cantidad/{id:int}")] // api/CarritoProductos/actualizar-cantidad/2
+        public async Task<ActionResult> ActualizarCantidad(int id, [FromBody] int cantidad)
         {
             try
             {
-                //CarritoProducto entidad = new CarritoProducto();
-                //entidad.Cantidad = entidadDTO.Cantidad;
-                //entidad.PrecioUnitario = entidadDTO.PrecioUnitario;
+                var resultado = await repositorio.ActualizarCantidad(id, cantidad);
+                if (!resultado)
+                {
+                    return BadRequest("No se pudo actualizar la cantidad del producto en el carrito");
+                }
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
 
-                CarritoProducto entidad = mapper.Map<CarritoProducto>(entidadDTO);
-                //context.CarritoProductos.Add(entidad);
-                //await context.SaveChangesAsync();
+        [HttpPost("actualizar-precio/{id:int}")] // api/CarritoProductos/actualizar-precio/2
+        public async Task<ActionResult> ActualizarPrecioUnitario(int id, [FromBody] decimal precioUnitario)
+        {
+            try
+            {
+                var resultado = await repositorio.ActualizarPrecioUnitario(id, precioUnitario);
+                if (!resultado)
+                {
+                    return BadRequest("No se pudo actualizar el precio unitario del producto en el carrito");
+                }
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<int>> Post(CarritoProducto entidad)
+        {
+            try
+            {
+                // Verificar si ya existe el producto en el carrito
+                // (El repositorio maneja esto automáticamente sumando las cantidades)
+
                 return await repositorio.Insert(entidad);
             }
-            catch (Exception e)
+            catch (Exception err)
             {
-                return BadRequest(e.Message);
-
+                return BadRequest(err.Message);
             }
         }
 
-        // PUT: api/CarritoProductos/2
-        [HttpPut("{id}")]
+        [HttpPut("{id:int}")] // api/CarritoProductos/2
         public async Task<ActionResult> Put(int id, [FromBody] CarritoProducto entidad)
         {
-            if (id != entidad.Id)
-            {
-                return BadRequest("Datos incorrrectos");
-            }
-            //var cp = await context.CarritoProductos
-            //              .Where(e => e.Id == id)
-            //              .FirstOrDefaultAsync();
-            var cp = await repositorio.SelectById(id);
-
-            if (cp == null)
-            {
-                return NotFound("No existe el carrito producto buscado.");
-            }
-
-            cp.CarritoId = entidad.CarritoId;
-            cp.ProductoId = entidad.ProductoId;
-            cp.Cantidad = entidad.Cantidad;
-            cp.PrecioUnitario = entidad.PrecioUnitario;
-            cp.Activo = entidad.Activo;
-
             try
             {
-                await repositorio.Update(id, cp);
-                //context.CarritoProductos.Update(cp);
-                //await context.SaveChangesAsync();
+                if (id != entidad.Id)
+                {
+                    return BadRequest("Datos Incorrectos");
+                }
+
+                var resultado = await repositorio.Update(id, entidad);
+
+                if (!resultado)
+                {
+                    return BadRequest("No se pudo actualizar el producto del carrito");
+                }
                 return Ok();
+
             }
             catch (Exception e)
             {
@@ -111,23 +158,26 @@ namespace AVritmica.Server.Controllers
             }
         }
 
-        // DELETE: api/CarritoProductos/2
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id:int}")] // api/CarritoProductos/2
         public async Task<ActionResult> Delete(int id)
         {
-            var existe = await repositorio.Existe(id);
-            if (!existe)
+            var resp = await repositorio.Delete(id);
+            if (!resp)
             {
-                return NotFound($"El carrito producto {id} no existe.");
+                return BadRequest("El producto del carrito no se pudo borrar");
             }
-            if (await repositorio.Delete(id))
+            return Ok();
+        }
+
+        [HttpDelete("DeleteByCarritoAndProducto")] // api/CarritoProductos/DeleteByCarritoAndProducto?carritoId=1&productoId=2
+        public async Task<ActionResult> DeleteByCarritoAndProducto([FromQuery] int carritoId, [FromQuery] int productoId)
+        {
+            var resp = await repositorio.DeleteByCarritoAndProducto(carritoId, productoId);
+            if (!resp)
             {
-                return Ok();
+                return BadRequest("El producto del carrito no se pudo borrar");
             }
-            else
-            {
-                return BadRequest();
-            }
+            return Ok();
         }
     }
 }

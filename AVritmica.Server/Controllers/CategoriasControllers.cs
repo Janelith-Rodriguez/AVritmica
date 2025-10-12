@@ -1,107 +1,109 @@
-﻿using AutoMapper;
-using AVritmica.BD.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using AVritmica.BD.Data.Entity;
 using AVritmica.Server.Repositorio;
-using AVritmica.Shared.DTO;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AVritmica.Server.Controllers
 {
     [ApiController]
     [Route("api/Categorias")]
-    public class CategoriasControllers : ControllerBase
+    public class CategoriasController : ControllerBase
     {
         private readonly ICategoriaRepositorio repositorio;
-        //private readonly Context context;
-        private readonly IMapper mapper;
 
-        public CategoriasControllers(ICategoriaRepositorio repositorio,
-                                     IMapper mapper)
+        public CategoriasController(ICategoriaRepositorio repositorio)
         {
             this.repositorio = repositorio;
-            //this.context = context;
-            this.mapper = mapper;
         }
 
-        // GET: api/Categorias
-        [HttpGet]
+        [HttpGet]    // api/Categorias
         public async Task<ActionResult<List<Categoria>>> Get()
         {
             return await repositorio.Select();
         }
 
-        // GET: api/Categorias/2
+        /// <summary>
+        /// Endpoint para obtener una categoría por ID
+        /// </summary>
+        /// <param name="id">Id de la categoría</param>
+        /// <returns></returns>
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Categoria>> Get(int id)
         {
-            Categoria? C = await repositorio.SelectById(id);
-
-            if (C == null)
+            Categoria? categoria = await repositorio.SelectById(id);  // ✅ Ahora reconoce que puede ser null
+            if (categoria == null)
             {
                 return NotFound();
             }
-
-            return C;
+            return categoria;
         }
 
-        [HttpGet("existe/{id:int}")] //api/Categorias/existe/2
+        [HttpGet("GetByNombre/{nombre}")] // api/Categorias/GetByNombre/Electrónica
+        public async Task<ActionResult<Categoria>> GetByNombre(string nombre)
+        {
+            Categoria? categoria = await repositorio.SelectByNombre(nombre);
+            if (categoria == null)
+            {
+                return NotFound();
+            }
+            return categoria;
+        }
+
+        [HttpGet("existe/{id:int}")] // api/Categorias/existe/2
         public async Task<ActionResult<bool>> Existe(int id)
         {
-            var existe = await repositorio.Existe(id);
-            return existe;
+            return await repositorio.Existe(id);
         }
 
-        // POST: api/Categorias
+        [HttpGet("existeNombre/{nombre}")] // api/Categorias/existeNombre/Electrónica
+        public async Task<ActionResult<bool>> ExisteNombre(string nombre)
+        {
+            return await repositorio.Existe(nombre);
+        }
+
         [HttpPost]
-        public async Task<ActionResult<int>> Post(CrearCategoriaDTO entidadDTO)
+        public async Task<ActionResult<int>> Post(Categoria entidad)
         {
             try
             {
-                //Categoria entidad = new Categoria();
-                //entidad.Nombre = entidadDTO.Nombre;
-                //entidad.Descripcion = entidadDTO.Descripcion;
+                // Verificar si ya existe una categoría con el mismo nombre
+                if (await repositorio.Existe(entidad.Nombre))
+                {
+                    return BadRequest("Ya existe una categoría con ese nombre");
+                }
 
-                Categoria entidad = mapper.Map<Categoria>(entidadDTO);
-                //context.Categorias.Add(entidad);
-                //await context.SaveChangesAsync();
-                return await repositorio.Insert (entidad);
+                return await repositorio.Insert(entidad);
             }
-            catch (Exception e)
+            catch (Exception err)
             {
-                return BadRequest(e.Message);
-
+                return BadRequest(err.Message);
             }
         }
 
-        // PUT: api/Categorias/2
-        [HttpPut("{id}")]
+        [HttpPut("{id:int}")] // api/Categorias/2
         public async Task<ActionResult> Put(int id, [FromBody] Categoria entidad)
         {
-            if (id != entidad.Id)
-            {
-                return BadRequest("Datos incorrrectos");
-            }
-            //var C = await context.Categorias
-            //              .Where(e => e.Id == id)
-            //              .FirstOrDefaultAsync();
-            var C = await repositorio.SelectById(id);
-
-            if (C == null)
-            {
-                return NotFound("No existe la categoria buscada.");
-            }
-
-            C.Nombre = entidad.Nombre;
-            C.Descripcion = entidad.Descripcion;
-            C.Activo = entidad.Activo;
-
             try
             {
-                await repositorio.Update(id, C);
-                //context.Categorias.Update(C);
-                //await context.SaveChangesAsync();
+                if (id != entidad.Id)
+                {
+                    return BadRequest("Datos Incorrectos");
+                }
+
+                // Verificar si el nombre ya existe en otra categoría
+                var categoriaExistente = await repositorio.SelectByNombre(entidad.Nombre);
+                if (categoriaExistente != null && categoriaExistente.Id != id)
+                {
+                    return BadRequest("Ya existe otra categoría con ese nombre");
+                }
+
+                var resultado = await repositorio.Update(id, entidad);
+
+                if (!resultado)
+                {
+                    return BadRequest("No se pudo actualizar la categoría");
+                }
                 return Ok();
+
             }
             catch (Exception e)
             {
@@ -109,23 +111,15 @@ namespace AVritmica.Server.Controllers
             }
         }
 
-        // DELETE: api/Categorias/2
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id:int}")] // api/Categorias/2
         public async Task<ActionResult> Delete(int id)
         {
-            var existe = await repositorio.Existe(id);
-            if (!existe)
+            var resp = await repositorio.Delete(id);
+            if (!resp)
             {
-                return NotFound($"La categoria {id} no existe.");
+                return BadRequest("La categoría no se pudo borrar");
             }
-            if (await repositorio.Delete(id)) 
-            { 
-                return Ok();
-            }
-            else
-            {
-                return BadRequest();
-            }
+            return Ok();
         }
     }
 }

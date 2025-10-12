@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using AVritmica.BD.Data;
 using AVritmica.Server.Repositorio;
+using AVritmica.Server.RepositorioImplementacion;
 
 //-----------------------------------------------------------------------------------------------------------------
 //Configuracion de los servicios en el constructor de la aplicacion

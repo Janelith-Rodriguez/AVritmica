@@ -25,5 +25,8 @@ namespace AVritmica.Shared.DTO
         public string Mensaje { get; set; } = string.Empty;
 
         public DateTime FechaEnvio { get; set; } = DateTime.UtcNow;
+
+        // Nueva propiedad
+        public bool Leida { get; set; } = false;
     }
 }

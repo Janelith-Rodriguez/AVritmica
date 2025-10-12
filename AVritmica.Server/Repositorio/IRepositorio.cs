@@ -8,7 +8,7 @@ namespace AVritmica.Server.Repositorio
         Task<bool> Existe(int id);
         Task<int> Insert(E entidad);
         Task<List<E>> Select();
-        Task<E> SelectById(int id);
+        Task<E?> SelectById(int id);  // Cambiado a nullable
         Task<bool> Update(int id, E entidad);
     }
 }
