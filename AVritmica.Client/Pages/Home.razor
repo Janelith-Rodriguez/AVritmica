@@ -2,6 +2,94 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="hero-container">
+    <div class="hero-content">
+        <h1 class="title">Bienvenidos a mi <br /> Tienda Online <span>AV.ritmica</span></h1>
+        <p class="subtitle">
+            Explora productos exclusivos de gimnasia rítmica y mucho más.
+        </p>
+        <button class="btn-start">Comenzar ahora</button>
+    </div>
+</div>
 
-Welcome to your new app.
+<style>
+    /* Contenedor con imagen de fondo */
+    .hero-container {
+        height: 80vh; /* ocupa toda la pantalla */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        background: url("images/hero-av-ritmica.jpg") no-repeat center center;
+        background-size: cover;
+        position: relative;
+    }
+
+        /* Capa de oscurecimiento para que el texto resalte */
+        .hero-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1;
+        }
+
+    /* Contenido principal */
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        color: #fff;
+        padding: 2rem;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        background: rgba(255,255,255,0.1);
+        box-shadow: 0px 10px 30px rgba(0,0,0,0.6);
+        transform: perspective(1000px) rotateX(5deg);
+        transition: transform 0.4s ease-in-out;
+    }
+
+        .hero-content:hover {
+            transform: perspective(1000px) rotateX(0deg) scale(1.02);
+        }
+
+    /* Título */
+    .title {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+    }
+
+        .title span {
+            color: #ff4081;
+        }
+
+    /* Subtítulo */
+    .subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        text-shadow: 1px 1px 6px rgba(0,0,0,0.6);
+    }
+
+    /* Botón */
+    .btn-start {
+        background: linear-gradient(45deg, #ff4081, #ff80ab);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        font-size: 1.2rem;
+        border-radius: 30px;
+        cursor: pointer;
+        box-shadow: 0px 6px 20px rgba(0,0,0,0.5);
+        transition: all 0.3s ease-in-out;
+    }
+
+        .btn-start:hover {
+            background: linear-gradient(45deg, #ff80ab, #ff4081);
+            transform: scale(1.1);
+            box-shadow: 0px 10px 25px rgba(0,0,0,0.6);
+        }
+</style>
