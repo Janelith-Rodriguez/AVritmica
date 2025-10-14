@@ -1,0 +1,197 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">AVritmica</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <!-- Inicio -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill" aria-hidden="true"></span> Inicio
+            </NavLink>
+        </div>
+
+        <!-- Gestión de Productos -->
+        <div class="nav-item px-3">
+            <div class="nav-link dropdown-toggle" @onclick="ToggleProductosMenu">
+                <span class="bi bi-box-seam" aria-hidden="true"></span> Productos
+            </div>
+            <div class="dropdown-menu @(productosMenuOpen ? "show" : "")">
+                <NavLink class="dropdown-item" href="categorias">
+                    <span class="bi bi-tags" aria-hidden="true"></span> Categorías
+                </NavLink>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="productos">
+                        <span class="oi oi-list" aria-hidden="true"></span> Productos
+                    </NavLink>
+                </div>
+                <NavLink class="dropdown-item" href="stock-movimientos">
+                    <span class="bi bi-arrow-left-right" aria-hidden="true"></span> Movimientos de Stock
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Ventas y Compras -->
+        <div class="nav-item px-3">
+            <div class="nav-link dropdown-toggle" @onclick="ToggleVentasMenu">
+                <span class="bi bi-cart" aria-hidden="true"></span> Ventas
+            </div>
+            <div class="dropdown-menu @(ventasMenuOpen ? "show" : "")">
+                <NavLink class="dropdown-item" href="carritos">
+                    <span class="bi bi-cart-check" aria-hidden="true"></span> Carritos
+                </NavLink>
+                <NavLink class="dropdown-item" href="carrito-productos">
+                    <span class="bi bi-cart-plus" aria-hidden="true"></span> Items Carrito
+                </NavLink>
+                <NavLink class="dropdown-item" href="pagos">
+                    <span class="bi bi-credit-card" aria-hidden="true"></span> Pagos
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Compras/Inventario -->
+        <div class="nav-item px-3">
+            <div class="nav-link dropdown-toggle" @onclick="ToggleComprasMenu">
+                <span class="bi bi-truck" aria-hidden="true"></span> Compras
+            </div>
+            <div class="dropdown-menu @(comprasMenuOpen ? "show" : "")">
+                <NavLink class="dropdown-item" href="compras">
+                    <span class="bi bi-receipt" aria-hidden="true"></span> Compras
+                </NavLink>
+                <NavLink class="dropdown-item" href="compra-detalles">
+                    <span class="bi bi-receipt-cutoff" aria-hidden="true"></span> Detalles Compra
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Gestión de Usuarios -->
+        <div class="nav-item px-3">
+            <div class="nav-link dropdown-toggle" @onclick="ToggleUsuariosMenu">
+                <span class="bi bi-people" aria-hidden="true"></span> Usuarios
+            </div>
+            <div class="dropdown-menu @(usuariosMenuOpen ? "show" : "")">
+                <NavLink class="dropdown-item" href="usuarios">
+                    <span class="bi bi-person" aria-hidden="true"></span> Usuarios
+                </NavLink>
+                <NavLink class="dropdown-item" href="consultas">
+                    <span class="bi bi-chat-left-text" aria-hidden="true"></span> Consultas
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Reportes -->
+        <div class="nav-item px-3">
+            <div class="nav-link dropdown-toggle" @onclick="ToggleReportesMenu">
+                <span class="bi bi-graph-up" aria-hidden="true"></span> Reportes
+            </div>
+            <div class="dropdown-menu @(reportesMenuOpen ? "show" : "")">
+                <NavLink class="dropdown-item" href="reporte-ventas">
+                    <span class="bi bi-currency-dollar" aria-hidden="true"></span> Ventas
+                </NavLink>
+                <NavLink class="dropdown-item" href="reporte-stock">
+                    <span class="bi bi-boxes" aria-hidden="true"></span> Stock
+                </NavLink>
+                <NavLink class="dropdown-item" href="reporte-compras">
+                    <span class="bi bi-cart-check" aria-hidden="true"></span> Compras
+                </NavLink>
+            </div>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="agregar-categorias-prueba">
+                <span class="oi oi-plus" aria-hidden="true"></span> Categorías Prueba
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="agregar-productos-prueba">
+                <span class="oi oi-plus" aria-hidden="true"></span> Productos Prueba
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="productos">
+                <span class="oi oi-list" aria-hidden="true"></span> Ver Productos
+            </NavLink>
+        </div>
+        <!-- Páginas de Ejemplo (puedes eliminar estas) -->
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="counter">
+                <span class="bi bi-plus-square" aria-hidden="true"></span> Counter
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="weather">
+                <span class="bi bi-cloud-sun" aria-hidden="true"></span> Weather
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private bool productosMenuOpen = false;
+    private bool ventasMenuOpen = false;
+    private bool comprasMenuOpen = false;
+    private bool usuariosMenuOpen = false;
+    private bool reportesMenuOpen = false;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void ToggleProductosMenu()
+    {
+        productosMenuOpen = !productosMenuOpen;
+        // Cerrar otros menús
+        ventasMenuOpen = false;
+        comprasMenuOpen = false;
+        usuariosMenuOpen = false;
+        reportesMenuOpen = false;
+    }
+
+    private void ToggleVentasMenu()
+    {
+        ventasMenuOpen = !ventasMenuOpen;
+        // Cerrar otros menús
+        productosMenuOpen = false;
+        comprasMenuOpen = false;
+        usuariosMenuOpen = false;
+        reportesMenuOpen = false;
+    }
+
+    private void ToggleComprasMenu()
+    {
+        comprasMenuOpen = !comprasMenuOpen;
+        // Cerrar otros menús
+        productosMenuOpen = false;
+        ventasMenuOpen = false;
+        usuariosMenuOpen = false;
+        reportesMenuOpen = false;
+    }
+
+    private void ToggleUsuariosMenu()
+    {
+        usuariosMenuOpen = !usuariosMenuOpen;
+        // Cerrar otros menús
+        productosMenuOpen = false;
+        ventasMenuOpen = false;
+        comprasMenuOpen = false;
+        reportesMenuOpen = false;
+    }
+
+    private void ToggleReportesMenu()
+    {
+        reportesMenuOpen = !reportesMenuOpen;
+        // Cerrar otros menús
+        productosMenuOpen = false;
+        ventasMenuOpen = false;
+        comprasMenuOpen = false;
+        usuariosMenuOpen = false;
+    }
+}

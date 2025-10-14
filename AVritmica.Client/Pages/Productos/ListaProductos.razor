@@ -1,0 +1,309 @@
+﻿@page "/productos"
+@inject IProductoService ProductoService
+@inject ICategoriaService CategoriaService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject IDebugService DebugService
+
+<h3>Lista de Productos</h3>
+
+@if (cargando)
+{
+    <div class="alert alert-info">
+        <i class="fas fa-spinner fa-spin"></i> Cargando productos...
+    </div>
+}
+else if (!string.IsNullOrEmpty(mensajeError))
+{
+    <div class="alert alert-danger">
+        <h5>Error al cargar productos</h5>
+        <p>@mensajeError</p>
+        <button class="btn btn-sm btn-outline-danger" @onclick="ReintentarCarga">Reintentar</button>
+    </div>
+}
+else
+{
+    <div class="mb-3">
+        <button class="btn btn-primary" @onclick="NuevoProducto">
+            <i class="fas fa-plus"></i> Nuevo Producto
+        </button>
+        
+        <div class="row mt-2">
+            <div class="col-md-4">
+                <label>Filtrar por categoría:</label>
+                <select @bind="filtroCategoriaId" class="form-control">
+                    <option value="0">Todas las categorías</option>
+                    @foreach (var cat in categorias)
+                    {
+                        <option value="@cat.Id">@cat.Nombre</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    @if (ProductosFiltrados.Count == 0)
+    {
+        <div class="alert alert-warning">
+            No se encontraron productos @(filtroCategoriaId > 0 ? "para la categoría seleccionada" : "").
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Categoría</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var producto in ProductosFiltrados)
+                    {
+                        <tr>
+                            <td>@producto.Id</td>
+                            <td>
+                                <strong>@producto.Nombre</strong>
+                                @if (!string.IsNullOrEmpty(producto.ImagenUrl))
+                                {
+                                    <br />
+                                    <small class="text-muted">
+                                        <i class="fas fa-image"></i> Con imagen
+                                    </small>
+                                }
+                            </td>
+                            <td>@(string.IsNullOrEmpty(producto.Descripcion) ? "Sin descripción" : 
+                                producto.Descripcion.Length > 50 ? producto.Descripcion.Substring(0, 50) + "..." : producto.Descripcion)</td>
+                            <td class="text-success">
+                                <strong>@producto.Precio.ToString("C")</strong>
+                            </td>
+                            <td>
+                                <span class="@(producto.Stock > 0 ? "badge badge-success" : "badge badge-danger")">
+                                    @producto.Stock
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-info">@(producto.Categoria?.Nombre ?? "N/A")</span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-info" @onclick="() => EditarProducto(producto.Id)" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-warning" @onclick="() => AjustarStock(producto)" title="Ajustar Stock">
+                                        <i class="fas fa-boxes"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" @onclick="() => EliminarProducto(producto)" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="mt-2">
+            <small class="text-muted">
+                Mostrando @ProductosFiltrados.Count de @productos.Count producto(s)
+                @if (filtroCategoriaId > 0)
+                {
+                    <span> - Filtrado por categoría</span>
+                }
+            </small>
+        </div>
+    }
+}
+
+<!-- Debug Section -->
+<div class="mt-4 border-top pt-3">
+    <h5>Debug</h5>
+    <button class="btn btn-warning btn-sm" @onclick="DebugError">
+        <i class="fas fa-bug"></i> Debug Error
+    </button>
+
+    @if (!string.IsNullOrEmpty(debugInfo))
+    {
+        <div class="alert alert-info mt-3">
+            <h6>Información de Debug:</h6>
+            <pre class="mt-2 p-2 bg-light border rounded" style="font-size: 0.8rem; max-height: 300px; overflow: auto;">@debugInfo</pre>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Producto> productos = new();
+    private List<Categoria> categorias = new();
+    private bool cargando = true;
+    private string mensajeError = string.Empty;
+    private string debugInfo = string.Empty;
+    private int filtroCategoriaId = 0;
+
+    // Propiedad computada para los productos filtrados
+    private List<Producto> ProductosFiltrados 
+    {
+        get
+        {
+            if (filtroCategoriaId == 0)
+                return productos;
+            
+            return productos.Where(p => p.CategoriaId == filtroCategoriaId).ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        cargando = true;
+        mensajeError = string.Empty;
+        debugInfo = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            // Cargar categorías primero
+            var catRespuesta = await CategoriaService.GetCategorias();
+            if (catRespuesta.Error)
+            {
+                mensajeError = await catRespuesta.ObtenerError();
+                if (string.IsNullOrEmpty(mensajeError))
+                {
+                    mensajeError = "Error al cargar las categorías";
+                }
+                cargando = false;
+                StateHasChanged();
+                return;
+            }
+            categorias = catRespuesta.Respuesta ?? new List<Categoria>();
+
+            // Luego cargar productos
+            await CargarProductos();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error inesperado: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CargarProductos()
+    {
+        try
+        {
+            var respuesta = await ProductoService.GetProductos();
+            
+            if (respuesta.Error)
+            {
+                var errorDetalle = await respuesta.ObtenerError();
+                mensajeError = $"Error al cargar productos: {errorDetalle}";
+                
+                // Si no hay detalles, mostrar mensaje genérico
+                if (string.IsNullOrEmpty(errorDetalle) || errorDetalle == "Error interno del servidor")
+                {
+                    mensajeError = "No se pudieron cargar los productos. Verifique que la API esté funcionando.";
+                }
+            }
+            else
+            {
+                productos = respuesta.Respuesta ?? new List<Producto>();
+                mensajeError = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Excepción al cargar productos: {ex.Message}";
+        }
+    }
+
+    private async Task ReintentarCarga()
+    {
+        await CargarDatos();
+    }
+
+    private void NuevoProducto()
+    {
+        Navigation.NavigateTo("/productos/nuevo");
+    }
+
+    private void EditarProducto(int id)
+    {
+        Navigation.NavigateTo($"/productos/editar/{id}");
+    }
+
+    private async Task AjustarStock(Producto producto)
+    {
+        var cantidad = await JS.InvokeAsync<string>("prompt", 
+            $"Ajustar stock para: {producto.Nombre}\n\nStock actual: {producto.Stock}\n\nIngrese la cantidad a sumar (ej: 10) o restar (ej: -5):");
+        
+        if (!string.IsNullOrEmpty(cantidad) && int.TryParse(cantidad, out int cant))
+        {
+            var respuesta = await ProductoService.ActualizarStock(producto.Id, cant);
+            if (!respuesta.Error)
+            {
+                // Recargar productos después de actualizar stock
+                await CargarProductos();
+                await JS.InvokeVoidAsync("alert", $"✅ Stock actualizado exitosamente");
+            }
+            else
+            {
+                var error = await respuesta.ObtenerError();
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {error}");
+            }
+        }
+    }
+
+    private async Task EliminarProducto(Producto producto)
+    {
+        var confirmado = await JS.InvokeAsync<bool>("confirm", 
+            $"¿Está seguro de eliminar el producto?\n\n\"{producto.Nombre}\"\n\nEsta acción no se puede deshacer.");
+        
+        if (confirmado)
+        {
+            var respuesta = await ProductoService.DeleteProducto(producto.Id);
+            if (!respuesta.Error)
+            {
+                // Recargar productos después de eliminar
+                await CargarProductos();
+                await JS.InvokeVoidAsync("alert", "✅ Producto eliminado exitosamente");
+            }
+            else
+            {
+                var error = await respuesta.ObtenerError();
+                await JS.InvokeVoidAsync("alert", $"❌ Error al eliminar: {error}");
+            }
+        }
+    }
+
+    private async Task DebugError()
+    {
+        debugInfo = "Ejecutando debug...";
+        StateHasChanged();
+
+        try
+        {
+            var debugResult = await DebugService.DebugProductos();
+            debugInfo = debugResult;
+        }
+        catch (Exception ex)
+        {
+            debugInfo = $"Error en debug: {ex.Message}\n{ex.StackTrace}";
+        }
+        
+        StateHasChanged();
+    }
+}

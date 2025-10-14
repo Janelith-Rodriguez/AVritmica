@@ -1,16 +1,15 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using AVritmica.BD.Data;
 using AVritmica.Server.Repositorio;
 using AVritmica.Server.RepositorioImplementacion;
 
-//-----------------------------------------------------------------------------------------------------------------
-//Configuracion de los servicios en el constructor de la aplicacion
+//------------------------------------------------------------------
+//configuracion de los servicios en el constructor de la aplicaci�n
 var builder = WebApplication.CreateBuilder(args);
 
-//builder.Services.AddControllers();
 builder.Services.AddControllers().AddJsonOptions(
-   x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+    x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -19,7 +18,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<Context>(op => op.UseSqlServer("name=conn"));  // Local instance MySQL83
+builder.Services.AddDbContext<Context>(op => op.UseSqlServer("name=conn"));//
 
 builder.Services.AddAutoMapper(typeof(Program));
 
@@ -33,10 +32,10 @@ builder.Services.AddScoped<IPagoRepositorio, PagoRepositorio>();
 builder.Services.AddScoped<IProductoRepositorio, ProductoRepositorio>();
 builder.Services.AddScoped<IStockMovimientoRepositorio, StockMovimientoRepositorio>();
 //builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
-
-//-----------------------------------------------------------------------------------------------------------------
-//Construccion de la aplicacion
+//--------------------------------------------------------------------
+//construcc�n de la aplicaci�n
 var app = builder.Build();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -45,9 +44,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
+app.UseRouting();
+app.MapRazorPages();
 
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 app.Run();

@@ -1,0 +1,109 @@
+﻿@page "/compra-detalles"
+@using AVritmica.BD.Data.Entity
+@using AVritmica.Client.Servicios.Entidades
+@inject ICompraDetalleServicio compraDetalleServicio
+@inject NavigationManager navigation
+
+<h3>Detalles de Compras</h3>
+
+@if (cargando)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (error)
+{
+    <div class="alert alert-danger">
+        <h5>Error al cargar los detalles</h5>
+        <p>@mensajeError</p>
+        <button class="btn btn-warning" @onclick="Recargar">Reintentar</button>
+    </div>
+}
+else if (compraDetalles == null || !compraDetalles.Any())
+{
+    <div class="alert alert-info">
+        No hay detalles de compras registrados.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Compra ID</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Compra</th>
+                    <th>Precio Venta</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var detalle in compraDetalles)
+                {
+                    <tr>
+                        <td>@detalle.Id</td>
+                        <td>@detalle.CompraId</td>
+                        <td>@(detalle.Producto?.Nombre ?? "N/A")</td>
+                        <td>@detalle.Cantidad</td>
+                        <td>@detalle.PrecioCompra.ToString("C")</td>
+                        <td>@detalle.PrecioVentaActualizado.ToString("C")</td>
+                        <td>@((detalle.Cantidad * detalle.PrecioCompra).ToString("C"))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<CompraDetalle>? compraDetalles;
+    private bool cargando = true;
+    private bool error = false;
+    private string mensajeError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCompraDetalles();
+    }
+
+    private async Task CargarCompraDetalles()
+    {
+        try
+        {
+            cargando = true;
+            error = false;
+            StateHasChanged();
+
+            var respuesta = await compraDetalleServicio.Get();
+            if (!respuesta.Error)
+            {
+                compraDetalles = respuesta.Respuesta;
+            }
+            else
+            {
+                error = true;
+                mensajeError = await respuesta.ObtenerError();
+            }
+        }
+        catch (Exception ex)
+        {
+            error = true;
+            mensajeError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Recargar() => CargarCompraDetalles();
+
+    [Inject] private IJSRuntime jsRuntime { get; set; } = default!;
+}

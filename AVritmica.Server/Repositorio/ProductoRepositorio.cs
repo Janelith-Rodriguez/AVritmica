@@ -63,11 +63,11 @@ namespace AVritmica.Server.RepositorioImplementacion
                 .AnyAsync(x => x.Nombre == nombre);
         }
 
-        public async Task<int> Insert(Producto entidad)
+        public async Task<int> Insert(Producto producto)
         {
-            await _context.Productos.AddAsync(entidad);
+            _context.Productos.Add(producto);
             await _context.SaveChangesAsync();
-            return entidad.Id;
+            return producto.Id; // Devuelve el ID generado
         }
 
         public async Task<bool> Update(int id, Producto entidad)

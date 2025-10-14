@@ -12,39 +12,41 @@ namespace AVritmica.Server.Util
             // CreateMap<CrearSourceDTO, Source>();
             
             //Carrito
-            //CreateMap<Carrito, CrearCarritoDTO>().ReverseMap();
-            CreateMap<CrearCarritoDTO, Carrito>();
+            CreateMap<Carrito, CrearCarritoDTO>().ReverseMap();
+            CreateMap<CrearCarritoDTO, Carrito>().ReverseMap();
 
             //CarritoProducto
-            //CreateMap<CarritoProducto, CrearCarritoProductoDTO>().ReverseMap();
-            CreateMap<CrearCarritoProductoDTO, CarritoProducto>();
+            CreateMap<CarritoProducto, CrearCarritoProductoDTO>().ReverseMap();
+            CreateMap<CrearCarritoProductoDTO, CarritoProducto>().ReverseMap();
 
             //Categoria
-            //CreateMap<Categoria, CrearCategoriaDTO>().ReverseMap();
-            CreateMap<CrearCategoriaDTO, Categoria>();
+            CreateMap<Categoria, CrearCategoriaDTO>().ReverseMap();
+            CreateMap<CrearCategoriaDTO, Categoria>().ReverseMap();
+            CreateMap<CategoriaDTO, Categoria>().ReverseMap();
 
             //Compra
-            //CreateMap<Compra, CrearCompraDTO>().ReverseMap();
-            CreateMap<CrearCompraDTO, Compra>();
+            CreateMap<Compra, CrearCompraDTO>().ReverseMap();
+            CreateMap<CrearCompraDTO, Compra>().ReverseMap();
             
             //CompraDetalle
-            //CreateMap<CompraDetalle, CrearCompraDetalleDTO>().ReverseMap();
+            CreateMap<CompraDetalle, CrearCompraDetalleDTO>().ReverseMap();
             CreateMap<CrearCompraDetalleDTO, CompraDetalle>();
             
             //Consulta
-            CreateMap<Consulta, CrearConsultaDTO>();
-
+            CreateMap<Consulta, CrearConsultaDTO>().ReverseMap();
+            CreateMap<CrearConsultaDTO, Consulta>().ReverseMap();
             //Pago
-            //CreateMap<Pago, CrearPagoDTO>().ReverseMap();
-            CreateMap<CrearPagoDTO, Pago>();
+            CreateMap<Pago, CrearPagoDTO>().ReverseMap();
+            CreateMap<CrearPagoDTO, Pago>().ReverseMap();
             
             //Producto
-            //CreateMap<Producto, CrearProductoDTO>().ReverseMap();
-            CreateMap<CrearProductoDTO, Producto>();
-            
+            CreateMap<Producto, CrearProductoDTO>().ReverseMap();
+            CreateMap<CrearProductoDTO, Producto>().ReverseMap();
+            CreateMap<ProductoDTO, Producto>().ReverseMap();
+
             //StockMovimiento
-            //CreateMap<StockMovimiento, CrearStockMovimientoDTO>().ReverseMap();
-            CreateMap<CrearStockMovimientoDTO, StockMovimiento>();
+            CreateMap<StockMovimiento, CrearStockMovimientoDTO>().ReverseMap();
+            CreateMap<CrearStockMovimientoDTO, StockMovimiento>().ReverseMap();
             
             //Usuario
             //CreateMap<Usuario, CrearUsuarioDTO>().ReverseMap();

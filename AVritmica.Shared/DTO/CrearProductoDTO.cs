@@ -1,32 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace AVritmica.Shared.DTO
 {
     public class CrearProductoDTO
     {
-        [Required]
-        [MaxLength(200)]
+        [Required(ErrorMessage = "El nombre es requerido")]
+        [MaxLength(200, ErrorMessage = "El nombre no puede exceder 200 caracteres")]
         public string Nombre { get; set; } = string.Empty;
 
         public string Descripcion { get; set; } = string.Empty;
 
-        [Required]
-        [DataType(DataType.Currency)]
-        [Column(TypeName = "decimal(18,2)")]
+        [Required(ErrorMessage = "El precio es requerido")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor a 0")]
         public decimal Precio { get; set; }
 
+        [Required(ErrorMessage = "El stock es requerido")]
+        [Range(0, int.MaxValue, ErrorMessage = "El stock no puede ser negativo")]
         public int Stock { get; set; }
 
         public string ImagenUrl { get; set; } = string.Empty;
 
-        // Clave foránea
-        //public int CategoriaId { get; set; }
-        //public Categoria Categoria { get; set; }
+        [Required(ErrorMessage = "La categoría es requerida")]
+        public int CategoriaId { get; set; } // ¡Esto faltaba!
     }
 }

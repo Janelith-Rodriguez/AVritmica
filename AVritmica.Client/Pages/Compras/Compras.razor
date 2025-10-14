@@ -1,0 +1,151 @@
+﻿@page "/compras"
+@using AVritmica.BD.Data.Entity
+@using AVritmica.Client.Servicios.Entidades
+@inject ICompraServicio compraServicio
+@inject NavigationManager navigation
+
+<h3>Gestión de Compras</h3>
+
+<button class="btn btn-primary mb-3" @onclick="NuevaCompra">
+    <i class="bi bi-cart-check"></i> Nueva Compra
+</button>
+
+@if (cargando)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (error)
+{
+    <div class="alert alert-danger">
+        <h5>Error al cargar las compras</h5>
+        <p>@mensajeError</p>
+        <button class="btn btn-warning" @onclick="Recargar">Reintentar</button>
+    </div>
+}
+else if (compras == null || !compras.Any())
+{
+    <div class="alert alert-info">
+        No hay compras registradas.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Descripción</th>
+                    <th>Total</th>
+                    <th>Items</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var compra in compras)
+                {
+                    <tr>
+                        <td>@compra.Id</td>
+                        <td>@compra.FechaCompra.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@compra.Descripcion</td>
+                        <td>
+                            @{
+                                var total = compra.CompraDetalles?.Sum(cd => cd.Cantidad * cd.PrecioCompra) ?? 0;
+                            }
+                            @total.ToString("C")
+                        </td>
+                        <td>
+                            <span class="badge bg-info">
+                                @(compra.CompraDetalles?.Count ?? 0) items
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-info" @onclick="() => VerDetalles(compra.Id)" title="Detalles">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning" @onclick="() => EditarCompra(compra.Id)" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarCompra(compra)" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Compra>? compras;
+    private bool cargando = true;
+    private bool error = false;
+    private string mensajeError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCompras();
+    }
+
+    private async Task CargarCompras()
+    {
+        try
+        {
+            cargando = true;
+            error = false;
+            StateHasChanged();
+
+            var respuesta = await compraServicio.Get();
+            if (!respuesta.Error)
+            {
+                compras = respuesta.Respuesta;
+            }
+            else
+            {
+                error = true;
+                mensajeError = await respuesta.ObtenerError();
+            }
+        }
+        catch (Exception ex)
+        {
+            error = true;
+            mensajeError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Recargar() => CargarCompras();
+    private void NuevaCompra() => navigation.NavigateTo("/compras/nuevo");
+    private void EditarCompra(int id) => navigation.NavigateTo($"/compras/editar/{id}");
+    private void VerDetalles(int id) => navigation.NavigateTo($"/compras/detalles/{id}");
+
+    private async Task EliminarCompra(Compra compra)
+    {
+        if (await jsRuntime.InvokeAsync<bool>("confirm", $"¿Está seguro de eliminar la compra #{compra.Id}?"))
+        {
+            var respuesta = await compraServicio.Delete(compra.Id);
+            if (!respuesta.Error)
+            {
+                await CargarCompras();
+                await jsRuntime.InvokeVoidAsync("alert", "Compra eliminada correctamente");
+            }
+            else
+            {
+                var errorMsg = await respuesta.ObtenerError();
+                await jsRuntime.InvokeVoidAsync("alert", errorMsg);
+            }
+        }
+    }
+
+    [Inject] private IJSRuntime jsRuntime { get; set; } = default!;
+}

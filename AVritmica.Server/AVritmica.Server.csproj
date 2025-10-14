@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.8">
       <PrivateAssets>all</PrivateAssets>
@@ -18,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AVritmica.BD\AVritmica.BD.csproj" />
+    <ProjectReference Include="..\AVritmica.Client\AVritmica.Client.csproj" />
     <ProjectReference Include="..\AVritmica.Shared\AVritmica.Shared.csproj" />
   </ItemGroup>
 

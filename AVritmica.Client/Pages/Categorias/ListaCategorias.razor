@@ -1,0 +1,104 @@
+﻿@page "/categorias"
+@inject ICategoriaService CategoriaService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<h3>Lista de Categorías</h3>
+
+@if (cargando)
+{
+    <div class="alert alert-info">Cargando...</div>
+}
+else if (!string.IsNullOrEmpty(mensajeError))
+{
+    <div class="alert alert-danger">@mensajeError</div>
+}
+else
+{
+    <div class="mb-3">
+        <button class="btn btn-primary" @onclick="NuevaCategoria">Nueva Categoría</button>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var categoria in categorias)
+            {
+                <tr>
+                    <td>@categoria.Id</td>
+                    <td>@categoria.Nombre</td>
+                    <td>@categoria.Descripcion</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" @onclick="() => EditarCategoria(categoria.Id)">Editar</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => EliminarCategoria(categoria)">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Categoria> categorias = new();
+    private bool cargando = true;
+    private string mensajeError = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCategorias();
+    }
+
+    private async Task CargarCategorias()
+    {
+        cargando = true;
+        mensajeError = string.Empty;
+        StateHasChanged();
+
+        var respuesta = await CategoriaService.GetCategorias();
+        if (!respuesta.Error)
+        {
+            categorias = respuesta.Respuesta ?? new List<Categoria>();
+        }
+        else
+        {
+            mensajeError = await respuesta.ObtenerError();
+        }
+
+        cargando = false;
+        StateHasChanged();
+    }
+
+    private void NuevaCategoria()
+    {
+        Navigation.NavigateTo("/categorias/nueva");
+    }
+
+    private void EditarCategoria(int id)
+    {
+        Navigation.NavigateTo($"/categorias/editar/{id}");
+    }
+
+    private async Task EliminarCategoria(Categoria categoria)
+    {
+        if (await JS.InvokeAsync<bool>("confirm", $"¿Está seguro de eliminar la categoría '{categoria.Nombre}'?"))
+        {
+            var respuesta = await CategoriaService.DeleteCategoria(categoria.Id);
+            if (!respuesta.Error)
+            {
+                await CargarCategorias();
+            }
+            else
+            {
+                mensajeError = await respuesta.ObtenerError();
+                StateHasChanged();
+            }
+        }
+    }
+}

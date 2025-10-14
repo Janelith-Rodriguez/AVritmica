@@ -1,0 +1,156 @@
+﻿@page "/carrito-productos"
+@using AVritmica.BD.Data.Entity
+@using AVritmica.Client.Servicios.Entidades
+@inject ICarritoProductoServicio carritoProductoServicio
+@inject NavigationManager navigation
+
+<h3>Items en Carritos</h3>
+
+@if (cargando)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (error)
+{
+    <div class="alert alert-danger">
+        <h5>Error al cargar los items</h5>
+        <p>@mensajeError</p>
+        <button class="btn btn-warning" @onclick="Recargar">Reintentar</button>
+    </div>
+}
+else if (carritoProductos == null || !carritoProductos.Any())
+{
+    <div class="alert alert-info">
+        No hay items en carritos.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Carrito ID</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in carritoProductos)
+                {
+                    <tr>
+                        <td>@item.Id</td>
+                        <td>@item.CarritoId</td>
+                        <td>@(item.Producto?.Nombre ?? "N/A")</td>
+                        <td>@item.Cantidad</td>
+                        <td>@item.PrecioUnitario.ToString("C")</td>
+                        <td>@((item.Cantidad * item.PrecioUnitario).ToString("C"))</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" @onclick="() => EditarCantidad(item)" title="Editar Cantidad">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarItem(item)" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<CarritoProducto>? carritoProductos;
+    private bool cargando = true;
+    private bool error = false;
+    private string mensajeError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCarritoProductos();
+    }
+
+    private async Task CargarCarritoProductos()
+    {
+        try
+        {
+            cargando = true;
+            error = false;
+            StateHasChanged();
+
+            var respuesta = await carritoProductoServicio.Get();
+            if (!respuesta.Error)
+            {
+                carritoProductos = respuesta.Respuesta;
+            }
+            else
+            {
+                error = true;
+                mensajeError = await respuesta.ObtenerError();
+            }
+        }
+        catch (Exception ex)
+        {
+            error = true;
+            mensajeError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Recargar() => CargarCarritoProductos();
+
+    private async Task EditarCantidad(CarritoProducto item)
+    {
+        var nuevaCantidad = await jsRuntime.InvokeAsync<string>("prompt",
+            $"Nueva cantidad para {item.Producto?.Nombre}:", item.Cantidad);
+
+        if (!string.IsNullOrEmpty(nuevaCantidad) && int.TryParse(nuevaCantidad, out int cantidad))
+        {
+            var respuesta = await carritoProductoServicio.ActualizarCantidad(item.Id, cantidad);
+            if (!respuesta.Error)
+            {
+                await CargarCarritoProductos();
+                await jsRuntime.InvokeVoidAsync("alert", "Cantidad actualizada correctamente");
+            }
+            else
+            {
+                var errorMsg = await respuesta.ObtenerError();
+                await jsRuntime.InvokeVoidAsync("alert", errorMsg);
+            }
+        }
+    }
+
+    private async Task EliminarItem(CarritoProducto item)
+    {
+        if (await jsRuntime.InvokeAsync<bool>("confirm",
+            $"¿Está seguro de eliminar {item.Cantidad} x {item.Producto?.Nombre} del carrito?"))
+        {
+            var respuesta = await carritoProductoServicio.Delete(item.Id);
+            if (!respuesta.Error)
+            {
+                await CargarCarritoProductos();
+                await jsRuntime.InvokeVoidAsync("alert", "Item eliminado correctamente");
+            }
+            else
+            {
+                var errorMsg = await respuesta.ObtenerError();
+                await jsRuntime.InvokeVoidAsync("alert", errorMsg);
+            }
+        }
+    }
+
+    [Inject] private IJSRuntime jsRuntime { get; set; } = default!;
+}

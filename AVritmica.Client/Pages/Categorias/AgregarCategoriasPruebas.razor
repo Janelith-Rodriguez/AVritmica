@@ -1,0 +1,43 @@
+﻿@page "/agregar-categorias-prueba"
+@inject ICategoriaService CategoriaService
+@inject NavigationManager Navigation
+
+<h3>Agregar Categorías de Prueba</h3>
+
+<button class="btn btn-primary" @onclick="AgregarCategoriasPrueba">Agregar Categorías de Prueba</button>
+<button class="btn btn-secondary" @onclick="IrAProductosPrueba">Ir a Productos Prueba</button>
+
+@if (!string.IsNullOrEmpty(mensaje))
+{
+    <div class="alert alert-info mt-3">@mensaje</div>
+}
+
+@code {
+    private string mensaje = string.Empty;
+
+    private async Task AgregarCategoriasPrueba()
+    {
+        try
+        {
+            // Verificar si ya existen categorías
+            var respuesta = await CategoriaService.GetCategorias();
+            if (!respuesta.Error && respuesta.Respuesta != null && respuesta.Respuesta.Any())
+            {
+                mensaje = $"Ya existen {respuesta.Respuesta.Count} categorías. No es necesario agregar más.";
+                return;
+            }
+
+            mensaje = "Categorías de prueba agregadas exitosamente.";
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error: {ex.Message}";
+        }
+        StateHasChanged();
+    }
+
+    private void IrAProductosPrueba()
+    {
+        Navigation.NavigateTo("/agregar-productos-prueba");
+    }
+}

@@ -1,0 +1,161 @@
+﻿@page "/pagos"
+@using AVritmica.BD.Data.Entity
+@using AVritmica.Client.Servicios.Entidades
+@inject IPagoServicio pagoServicio
+@inject NavigationManager navigation
+
+<h3>Gestión de Pagos</h3>
+
+<button class="btn btn-primary mb-3" @onclick="NuevoPago">
+    <i class="bi bi-credit-card"></i> Nuevo Pago
+</button>
+
+@if (cargando)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (error)
+{
+    <div class="alert alert-danger">
+        <h5>Error al cargar los pagos</h5>
+        <p>@mensajeError</p>
+        <button class="btn btn-warning" @onclick="Recargar">Reintentar</button>
+    </div>
+}
+else if (pagos == null || !pagos.Any())
+{
+    <div class="alert alert-info">
+        No hay pagos registrados.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Carrito ID</th>
+                    <th>Método</th>
+                    <th>Monto</th>
+                    <th>Estado</th>
+                    <th>Saldo</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pago in pagos)
+                {
+                    <tr>
+                        <td>@pago.Id</td>
+                        <td>@pago.CarritoId</td>
+                        <td>@pago.MetodoPago</td>
+                        <td>@pago.MontoPagado.ToString("C")</td>
+                        <td>
+                            <span class="badge @GetEstadoPagoBadgeClass(pago.EstadoPago)">
+                                @pago.EstadoPago
+                            </span>
+                        </td>
+                        <td>@pago.Saldo.ToString("C")</td>
+                        <td>@pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" @onclick="() => VerDetalles(pago.Id)" title="Detalles">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning" @onclick="() => EditarPago(pago.Id)" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarPago(pago)" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Pago>? pagos;
+    private bool cargando = true;
+    private bool error = false;
+    private string mensajeError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPagos();
+    }
+
+    private async Task CargarPagos()
+    {
+        try
+        {
+            cargando = true;
+            error = false;
+            StateHasChanged();
+
+            var respuesta = await pagoServicio.Get();
+            if (!respuesta.Error)
+            {
+                pagos = respuesta.Respuesta;
+            }
+            else
+            {
+                error = true;
+                mensajeError = await respuesta.ObtenerError();
+            }
+        }
+        catch (Exception ex)
+        {
+            error = true;
+            mensajeError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetEstadoPagoBadgeClass(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "completado" => "bg-success",
+            "pendiente" => "bg-warning",
+            "rechazado" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void Recargar() => CargarPagos();
+    private void NuevoPago() => navigation.NavigateTo("/pagos/nuevo");
+    private void EditarPago(int id) => navigation.NavigateTo($"/pagos/editar/{id}");
+    private void VerDetalles(int id) => navigation.NavigateTo($"/pagos/detalles/{id}");
+
+    private async Task EliminarPago(Pago pago)
+    {
+        if (await jsRuntime.InvokeAsync<bool>("confirm", $"¿Está seguro de eliminar el pago #{pago.Id}?"))
+        {
+            var respuesta = await pagoServicio.Delete(pago.Id);
+            if (!respuesta.Error)
+            {
+                await CargarPagos();
+                await jsRuntime.InvokeVoidAsync("alert", "Pago eliminado correctamente");
+            }
+            else
+            {
+                var errorMsg = await respuesta.ObtenerError();
+                await jsRuntime.InvokeVoidAsync("alert", errorMsg);
+            }
+        }
+    }
+
+    [Inject] private IJSRuntime jsRuntime { get; set; } = default!;
+}

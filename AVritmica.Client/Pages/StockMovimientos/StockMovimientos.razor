@@ -1,0 +1,166 @@
+﻿@page "/stock-movimientos"
+@using AVritmica.BD.Data.Entity
+@using AVritmica.Client.Servicios.Entidades
+@inject IStockMovimientoServicio stockMovimientoServicio
+@inject NavigationManager navigation
+
+<h3>Movimientos de Stock</h3>
+
+<button class="btn btn-primary mb-3" @onclick="NuevoMovimiento">
+    <i class="bi bi-plus-circle"></i> Nuevo Movimiento
+</button>
+
+@if (cargando)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (error)
+{
+    <div class="alert alert-danger">
+        <h5>Error al cargar los movimientos</h5>
+        <p>@mensajeError</p>
+        <button class="btn btn-warning" @onclick="Recargar">Reintentar</button>
+    </div>
+}
+else if (movimientos == null || !movimientos.Any())
+{
+    <div class="alert alert-info">
+        No hay movimientos de stock registrados.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Producto</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                    <th>Descripción</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var movimiento in movimientos)
+                {
+                    <tr>
+                        <td>@movimiento.Id</td>
+                        <td>@(movimiento.Producto?.Nombre ?? "N/A")</td>
+                        <td>
+                            <span class="badge @GetTipoMovimientoBadgeClass(movimiento.TipoMovimiento)">
+                                @movimiento.TipoMovimiento
+                            </span>
+                        </td>
+                        <td class="@(movimiento.TipoMovimiento.ToLower().Contains("entrada") ? "text-success" : "text-danger")">
+                            @if (movimiento.TipoMovimiento.ToLower().Contains("entrada"))
+                            {
+                                <text>+</text>
+                            }
+                            else
+                            {
+                                <text>-</text>
+                            }
+                            @movimiento.Cantidad
+                        </td>
+                        <td class="text-truncate" style="max-width: 200px;" title="@movimiento.Descripcion">
+                            @movimiento.Descripcion
+                        </td>
+                        <td>@movimiento.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" @onclick="() => VerDetalles(movimiento.Id)" title="Detalles">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarMovimiento(movimiento)" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<StockMovimiento>? movimientos;
+    private bool cargando = true;
+    private bool error = false;
+    private string mensajeError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarMovimientos();
+    }
+
+    private async Task CargarMovimientos()
+    {
+        try
+        {
+            cargando = true;
+            error = false;
+            StateHasChanged();
+
+            var respuesta = await stockMovimientoServicio.Get();
+            if (!respuesta.Error)
+            {
+                movimientos = respuesta.Respuesta;
+            }
+            else
+            {
+                error = true;
+                mensajeError = await respuesta.ObtenerError();
+            }
+        }
+        catch (Exception ex)
+        {
+            error = true;
+            mensajeError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetTipoMovimientoBadgeClass(string tipo)
+    {
+        return tipo?.ToLower() switch
+        {
+            "entrada" or "compra" or "ajuste positivo" => "bg-success",
+            "salida" or "venta" or "ajuste negativo" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void Recargar() => CargarMovimientos();
+    private void NuevoMovimiento() => navigation.NavigateTo("/stock-movimientos/nuevo");
+    private void VerDetalles(int id) => navigation.NavigateTo($"/stock-movimientos/detalles/{id}");
+
+    private async Task EliminarMovimiento(StockMovimiento movimiento)
+    {
+        if (await jsRuntime.InvokeAsync<bool>("confirm", $"¿Está seguro de eliminar este movimiento de stock?"))
+        {
+            var respuesta = await stockMovimientoServicio.Delete(movimiento.Id);
+            if (!respuesta.Error)
+            {
+                await CargarMovimientos();
+                await jsRuntime.InvokeVoidAsync("alert", "Movimiento eliminado correctamente");
+            }
+            else
+            {
+                var errorMsg = await respuesta.ObtenerError();
+                await jsRuntime.InvokeVoidAsync("alert", errorMsg);
+            }
+        }
+    }
+
+    [Inject] private IJSRuntime jsRuntime { get; set; } = default!;
+}

@@ -1,0 +1,242 @@
+﻿@page "/productos/nuevo"
+@page "/productos/editar/{Id:int}"
+@using AVritmica.Shared.DTO
+@inject IProductoService ProductoService
+@inject ICategoriaService CategoriaService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<h3>@Titulo</h3>
+
+<EditForm Model="producto" OnValidSubmit="GuardarProducto">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="nombre">Nombre *</label>
+        <InputText id="nombre" @bind-Value="producto.Nombre" class="form-control" />
+        <ValidationMessage For="@(() => producto.Nombre)" />
+    </div>
+
+    <div class="form-group">
+        <label for="descripcion">Descripción</label>
+        <InputTextArea id="descripcion" @bind-Value="producto.Descripcion" class="form-control" />
+        <ValidationMessage For="@(() => producto.Descripcion)" />
+    </div>
+
+    <div class="form-group">
+        <label for="precio">Precio *</label>
+        <InputNumber id="precio" @bind-Value="producto.Precio" class="form-control" />
+        <ValidationMessage For="@(() => producto.Precio)" />
+    </div>
+
+    <div class="form-group">
+        <label for="stock">Stock *</label>
+        <InputNumber id="stock" @bind-Value="producto.Stock" class="form-control" />
+        <ValidationMessage For="@(() => producto.Stock)" />
+    </div>
+
+    <div class="form-group">
+        <label for="imagenUrl">URL de Imagen</label>
+        <InputText id="imagenUrl" @bind-Value="producto.ImagenUrl" class="form-control" />
+        <ValidationMessage For="@(() => producto.ImagenUrl)" />
+    </div>
+
+    <div class="form-group">
+        <label for="categoriaId">Categoría *</label>
+        <InputSelect id="categoriaId" @bind-Value="producto.CategoriaId" class="form-control">
+            <option value="">Seleccione una categoría</option>
+            @foreach (var categoria in categorias)
+            {
+                <option value="@categoria.Id">@categoria.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => producto.CategoriaId)" />
+    </div>
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary" disabled="@cargando">
+            @(cargando ? "Guardando..." : "Guardar")
+        </button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancelar" disabled="@cargando">
+            Cancelar
+        </button>
+    </div>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(mensajeError))
+{
+    <div class="alert alert-danger mt-3">@mensajeError</div>
+}
+
+@if (!string.IsNullOrEmpty(mensajeExito))
+{
+    <div class="alert alert-success mt-3">@mensajeExito</div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }  // <- ESTA LÍNEA FALTABA
+
+    private CrearProductoDTO producto = new();
+    private List<Categoria> categorias = new();
+    private bool cargando = false;
+    private string mensajeError = string.Empty;
+    private string mensajeExito = string.Empty;
+    private string Titulo => Id == 0 ? "Nuevo Producto" : "Editar Producto";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCategorias();
+
+        if (Id > 0)
+        {
+            await CargarProducto();
+        }
+        else
+        {
+            // Inicializar valores por defecto para nuevo producto
+            producto.Stock = 0;
+            producto.Precio = 0;
+        }
+    }
+
+    private async Task CargarCategorias()
+    {
+        cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            var respuesta = await CategoriaService.GetCategorias();
+            if (!respuesta.Error)
+            {
+                categorias = respuesta.Respuesta ?? new List<Categoria>();
+            }
+            else
+            {
+                mensajeError = "Error al cargar las categorías";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error: {ex.Message}";
+        }
+
+        cargando = false;
+        StateHasChanged();
+    }
+
+    private async Task CargarProducto()
+    {
+        cargando = true;
+        mensajeError = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            var respuesta = await ProductoService.GetProducto(Id);
+            if (!respuesta.Error && respuesta.Respuesta != null)
+            {
+                var productoExistente = respuesta.Respuesta;
+                producto = new CrearProductoDTO
+                {
+                    Nombre = productoExistente.Nombre,
+                    Descripcion = productoExistente.Descripcion,
+                    Precio = productoExistente.Precio,
+                    Stock = productoExistente.Stock,
+                    ImagenUrl = productoExistente.ImagenUrl,
+                    CategoriaId = productoExistente.CategoriaId
+                };
+            }
+            else
+            {
+                mensajeError = await respuesta.ObtenerError();
+                if (string.IsNullOrEmpty(mensajeError))
+                {
+                    mensajeError = "Error al cargar el producto";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error: {ex.Message}";
+        }
+
+        cargando = false;
+        StateHasChanged();
+    }
+
+    private async Task GuardarProducto()
+    {
+        cargando = true;
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            if (Id == 0)
+            {
+                // Crear nuevo producto
+                var respuesta = await ProductoService.CreateProducto(producto);
+                if (!respuesta.Error)
+                {
+                    mensajeExito = "Producto creado exitosamente";
+                    await Task.Delay(1500);
+                    Navigation.NavigateTo("/productos");
+                }
+                else
+                {
+                    mensajeError = await respuesta.ObtenerError();
+                    if (string.IsNullOrEmpty(mensajeError))
+                    {
+                        mensajeError = "Error al crear el producto";
+                    }
+                }
+            }
+            else
+            {
+                // Actualizar producto existente
+                var productoActualizado = new Producto
+                {
+                    Id = Id,
+                    Nombre = producto.Nombre,
+                    Descripcion = producto.Descripcion,
+                    Precio = producto.Precio,
+                    Stock = producto.Stock,
+                    ImagenUrl = producto.ImagenUrl,
+                    CategoriaId = producto.CategoriaId
+                };
+
+                var respuesta = await ProductoService.UpdateProducto(Id, productoActualizado);
+                if (!respuesta.Error)
+                {
+                    mensajeExito = "Producto actualizado exitosamente";
+                    await Task.Delay(1500);
+                    Navigation.NavigateTo("/productos");
+                }
+                else
+                {
+                    mensajeError = await respuesta.ObtenerError();
+                    if (string.IsNullOrEmpty(mensajeError))
+                    {
+                        mensajeError = "Error al actualizar el producto";
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error: {ex.Message}";
+        }
+
+        cargando = false;
+        StateHasChanged();
+    }
+
+    private void Cancelar()
+    {
+        Navigation.NavigateTo("/productos");
+    }
+}

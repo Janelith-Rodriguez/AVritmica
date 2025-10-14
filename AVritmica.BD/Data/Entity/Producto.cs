@@ -11,8 +11,6 @@ using System.Threading.Tasks;
 namespace AVritmica.BD.Data.Entity
 {
     [Index(nameof(Nombre), Name = "IX_Productos_Nombre")]
-    [Index(nameof(CategoriaId), Name = "IX_Productos_IdCategoria")]
-    [Index(nameof(Precio), Name = "IX_Productos_Precio")]
     public class Producto : EntityBase
     {
         [Required]
