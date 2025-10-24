@@ -1,0 +1,433 @@
+﻿@page "/compra-detalle-editar/{Id:int}"
+@page "/compra-detalle-editar/{Id:int}/{CompraIdParam:int}"
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject HttpClient Http
+
+<PageTitle>AVritmica - @TituloPagina</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h3 class="text-primary">
+                <i class="fas @IconoTitulo me-2"></i>@TituloPagina
+            </h3>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="/compra-detalles">Detalles de Compra</a></li>
+                    @if (CompraIdParam > 0)
+                    {
+                        <li class="breadcrumb-item">
+                            <a href="/compra-detalles/@CompraIdParam">Compra #@CompraIdParam</a>
+                        </li>
+                    }
+                    <li class="breadcrumb-item active">@AccionActual</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-secondary" @onclick="Volver">
+                <i class="fas fa-arrow-left me-1"></i>Volver
+            </button>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Información del Detalle de Compra
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="detalle" OnValidSubmit="Guardar" Context="form">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="alert alert-danger" />
+
+                        <!-- Compra -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="compra" class="form-label required">Compra</label>
+                                @if (CompraIdParam > 0 && Id == 0)
+                                {
+                                    <input type="text" class="form-control" value="Compra #@CompraIdParam" disabled />
+                                    <input type="hidden" @bind="detalle.CompraId" />
+                                }
+                                else
+                                {
+                                    <select id="compra" class="form-select @(validacionCompra)"
+                                            @bind="detalle.CompraId" @bind:after="ValidarCombinacion">
+                                        <option value="0">Seleccione una compra...</option>
+                                        @foreach (var compra in compras)
+                                        {
+                                            <option value="@compra.Id">Compra #@compra.Id - @compra.FechaCompra.ToString("dd/MM/yyyy")</option>
+                                        }
+                                    </select>
+                                    <div class="form-text">
+                                        <span class="@(validacionCompra == "is-valid" ? "text-success" : "text-danger")">
+                                            @mensajeValidacionCompra
+                                        </span>
+                                    </div>
+                                    <ValidationMessage For="@(() => detalle.CompraId)" class="text-danger" />
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Producto -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="producto" class="form-label required">Producto</label>
+                                <select id="producto" class="form-select @(validacionProducto)"
+                                        @bind="detalle.ProductoId" @bind:after="ValidarCombinacion">
+                                    <option value="0">Seleccione un producto...</option>
+                                    @foreach (var producto in productos)
+                                    {
+                                        <option value="@producto.Id">@producto.Nombre</option>
+                                    }
+                                </select>
+                                <div class="form-text">
+                                    <span class="@(validacionProducto == "is-valid" ? "text-success" : "text-danger")">
+                                        @mensajeValidacionProducto
+                                    </span>
+                                </div>
+                                <ValidationMessage For="@(() => detalle.ProductoId)" class="text-danger" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Información del Producto</label>
+                                <div class="border rounded p-3 bg-light">
+                                    @if (productoSeleccionado != null)
+                                    {
+                                        <div class="small">
+                                            <strong>@productoSeleccionado.Nombre</strong><br>
+                                            <span class="text-muted">Descripción: @productoSeleccionado.Descripcion</span><br>
+                                            <span class="text-muted">Categoría: @productoSeleccionado.Categoria?.Nombre</span><br>
+                                            <span class="text-muted">Stock: @productoSeleccionado.Stock</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-muted small">
+                                            Seleccione un producto para ver su información
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cantidad y Precios -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="cantidad" class="form-label required">Cantidad</label>
+                                <input id="cantidad" type="number" class="form-control"
+                                       @bind="detalle.Cantidad" min="1" step="1" />
+                                <ValidationMessage For="@(() => detalle.Cantidad)" class="text-danger" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="precioCompra" class="form-label required">Precio de Compra</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input id="precioCompra" type="number" class="form-control"
+                                           @bind="detalle.PrecioCompra" min="0.01" step="0.01" />
+                                </div>
+                                <ValidationMessage For="@(() => detalle.PrecioCompra)" class="text-danger" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="precioVenta" class="form-label required">Precio de Venta</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input id="precioVenta" type="number" class="form-control"
+                                           @bind="detalle.PrecioVentaActualizado" min="0.01" step="0.01" />
+                                </div>
+                                <ValidationMessage For="@(() => detalle.PrecioVentaActualizado)" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <!-- Resumen -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white py-2">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-calculator me-2"></i>Resumen
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row text-center">
+                                            <div class="col-md-4">
+                                                <small class="text-muted">Subtotal Compra</small>
+                                                <h5 class="text-primary">@SubtotalCompra.ToString("C2")</h5>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <small class="text-muted">Margen por Unidad</small>
+                                                <h5 class="@(MargenUnidad >= 0 ? "text-success" : "text-danger")">
+                                                    @MargenUnidad.ToString("C2")
+                                                </h5>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <small class="text-muted">Margen Total</small>
+                                                <h5 class="@(MargenTotal >= 0 ? "text-success" : "text-danger")">
+                                                    @MargenTotal.ToString("C2")
+                                                </h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <button type="button" class="btn btn-secondary me-md-2" @onclick="Volver">
+                                        <i class="fas fa-times me-1"></i>Cancelar
+                                    </button>
+                                    <button type="submit" class="btn btn-primary" disabled="@(!formularioValido)">
+                                        <i class="fas fa-save me-1"></i>@TextoBotonGuardar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public int CompraIdParam { get; set; }
+
+    private CompraDetalleDto detalle = new();
+    private List<Compra> compras = new();
+    private List<Producto> productos = new();
+    private Producto? productoSeleccionado;
+    private bool cargando = true;
+    private bool formularioValido = false;
+    private string validacionCompra = "";
+    private string validacionProducto = "";
+    private string mensajeValidacionCompra = "";
+    private string mensajeValidacionProducto = "";
+
+    // Propiedades computadas
+    private string TituloPagina => Id == 0 ? "Nuevo Detalle de Compra" : "Editar Detalle de Compra";
+    private string IconoTitulo => Id == 0 ? "fa-plus-circle" : "fa-edit";
+    private string AccionActual => Id == 0 ? "Nuevo" : "Editar";
+    private string TextoBotonGuardar => Id == 0 ? "Crear Detalle" : "Actualizar Detalle";
+
+    private decimal SubtotalCompra => detalle.Cantidad * detalle.PrecioCompra;
+    private decimal MargenUnidad => detalle.PrecioVentaActualizado - detalle.PrecioCompra;
+    private decimal MargenTotal => MargenUnidad * detalle.Cantidad;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosIniciales();
+
+        if (Id > 0)
+        {
+            await CargarDetalle();
+        }
+        else if (CompraIdParam > 0)
+        {
+            detalle.CompraId = CompraIdParam;
+        }
+
+        cargando = false;
+        await ValidarCombinacion();
+    }
+
+    private async Task CargarDatosIniciales()
+    {
+        try
+        {
+            // Cargar compras
+            var comprasResponse = await Http.GetFromJsonAsync<List<Compra>>("api/Compras");
+            compras = comprasResponse ?? new List<Compra>();
+
+            // Cargar productos
+            var productosResponse = await Http.GetFromJsonAsync<List<Producto>>("api/Productos");
+            productos = productosResponse ?? new List<Producto>();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar datos iniciales: {ex.Message}");
+        }
+    }
+
+    private async Task CargarDetalle()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<CompraDetalle>($"api/CompraDetalles/{Id}");
+            if (response != null)
+            {
+                detalle = new CompraDetalleDto
+                {
+                    Id = response.Id,
+                    CompraId = response.CompraId,
+                    ProductoId = response.ProductoId,
+                    Cantidad = response.Cantidad,
+                    PrecioCompra = response.PrecioCompra,
+                    PrecioVentaActualizado = response.PrecioVentaActualizado
+                };
+                await ActualizarProductoSeleccionado();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar el detalle: {ex.Message}");
+        }
+    }
+
+    private async Task ValidarCombinacion()
+    {
+        if (detalle.CompraId > 0 && detalle.ProductoId > 0)
+        {
+            try
+            {
+                var url = $"api/CompraDetalles/validar-combinacion?compraId={detalle.CompraId}&productoId={detalle.ProductoId}";
+                if (Id > 0)
+                {
+                    url += $"&excludeId={Id}";
+                }
+
+                var response = await Http.GetFromJsonAsync<ValidacionResponse>(url);
+
+                if (response != null)
+                {
+                    formularioValido = !response.Existe;
+                    validacionCompra = response.Existe ? "is-invalid" : "is-valid";
+                    validacionProducto = response.Existe ? "is-invalid" : "is-valid";
+                    mensajeValidacionCompra = response.Mensaje;
+                    mensajeValidacionProducto = response.Mensaje;
+                }
+
+                await ActualizarProductoSeleccionado();
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"Error al validar combinación: {ex.Message}");
+            }
+        }
+        else
+        {
+            formularioValido = false;
+            validacionCompra = detalle.CompraId > 0 ? "is-valid" : "";
+            validacionProducto = detalle.ProductoId > 0 ? "is-valid" : "";
+            mensajeValidacionCompra = "";
+            mensajeValidacionProducto = "";
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ActualizarProductoSeleccionado()
+    {
+        productoSeleccionado = productos.FirstOrDefault(p => p.Id == detalle.ProductoId);
+        StateHasChanged();
+    }
+
+    private async Task Guardar()
+    {
+        if (!formularioValido)
+        {
+            await JS.InvokeVoidAsync("alert", "Por favor, corrija los errores del formulario antes de guardar.");
+            return;
+        }
+
+        try
+        {
+            HttpResponseMessage response;
+
+            if (Id == 0)
+            {
+                response = await Http.PostAsJsonAsync("api/CompraDetalles", detalle);
+            }
+            else
+            {
+                response = await Http.PutAsJsonAsync($"api/CompraDetalles/{Id}", detalle);
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                var mensaje = Id == 0 ? "Detalle de compra creado correctamente" : "Detalle de compra actualizado correctamente";
+                await JS.InvokeVoidAsync("alert", mensaje);
+
+                // Redirigir a la página de detalles de la compra o a la lista general
+                if (detalle.CompraId > 0)
+                {
+                    Navigation.NavigateTo($"/compra-detalles/{detalle.CompraId}");
+                }
+                else
+                {
+                    Navigation.NavigateTo("/compra-detalles");
+                }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                await JS.InvokeVoidAsync("alert", $"Error al guardar: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private void Volver()
+    {
+        if (detalle.CompraId > 0)
+        {
+            Navigation.NavigateTo($"/compra-detalles/{detalle.CompraId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/compra-detalles");
+        }
+    }
+
+    // Clases DTO y de apoyo
+    public class CompraDetalleDto
+    {
+        public int Id { get; set; }
+        public int CompraId { get; set; }
+        public int ProductoId { get; set; }
+        public int Cantidad { get; set; } = 1;
+        public decimal PrecioCompra { get; set; } = 0.01m;
+        public decimal PrecioVentaActualizado { get; set; } = 0.01m;
+    }
+
+    public class Compra
+    {
+        public int Id { get; set; }
+        public DateTime FechaCompra { get; set; }
+    }
+
+    public class Producto
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+        public decimal Precio { get; set; }
+        public int Stock { get; set; }
+        public string ImagenUrl { get; set; } = string.Empty;
+        public Categoria? Categoria { get; set; }
+    }
+
+    public class Categoria
+    {
+        public int Id { get; set; }
+        public string? Nombre { get; set; }
+    }
+
+    public class ValidacionResponse
+    {
+        public bool Existe { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+    }
+}

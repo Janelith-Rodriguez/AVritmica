@@ -1,0 +1,380 @@
+﻿@page "/compra-detalle-detalles/{Id:int}"
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject HttpClient Http
+
+<PageTitle>AVritmica - Detalles de Compra #@Id</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h3 class="text-primary">
+                <i class="fas fa-eye me-2"></i>Detalles de Compra
+            </h3>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="/compra-detalles">Detalles de Compra</a></li>
+                    <li class="breadcrumb-item active">Detalle #@Id</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <button class="btn btn-outline-primary" @onclick="Editar">
+                    <i class="fas fa-edit me-1"></i>Editar
+                </button>
+                <button class="btn btn-outline-secondary" @onclick="Volver">
+                    <i class="fas fa-arrow-left me-1"></i>Volver
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (cargando)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2">Cargando detalles...</p>
+        </div>
+    }
+    else if (detalle != null)
+    {
+        <div class="row">
+            <!-- Información Principal -->
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Información del Detalle
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th class="text-muted" width="40%">ID:</th>
+                                        <td><strong>#@detalle.Id</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-muted">Compra:</th>
+                                        <td>
+                                            <a href="/compras/@detalle.CompraId" class="text-decoration-none">
+                                                <strong>Compra #@detalle.CompraId</strong>
+                                            </a>
+                                            <br>
+                                            <small class="text-muted">
+                                                @detalle.Compra?.FechaCompra.ToString("dd/MM/yyyy")
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-muted">Producto:</th>
+                                        <td>
+                                            <strong>@detalle.Producto?.Nombre</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                Stock: @detalle.Producto?.Stock unidades
+                                            </small>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th class="text-muted" width="40%">Categoría:</th>
+                                        <td>@detalle.Producto?.Categoria?.Nombre</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-muted">Cantidad:</th>
+                                        <td>
+                                            <span class="badge bg-primary rounded-pill fs-6">
+                                                @detalle.Cantidad unidades
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-muted">Estado:</th>
+                                        <td>
+                                            <span class="badge bg-success">Activo</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información del Producto -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-box me-2"></i>
+                            Información del Producto
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (detalle.Producto != null)
+                        {
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>@detalle.Producto.Nombre</strong>
+                                    <p class="text-muted mb-2">@detalle.Producto.Descripcion</p>
+                                    <div class="small">
+                                        <span class="text-muted">Precio Actual: </span>
+                                        <span class="fw-bold text-success">@detalle.Producto.Precio.ToString("C2")</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="small">
+                                        <div class="mb-1">
+                                            <span class="text-muted">Categoría: </span>
+                                            <span>@detalle.Producto.Categoria?.Nombre</span>
+                                        </div>
+                                        <div class="mb-1">
+                                            <span class="text-muted">Stock Actual: </span>
+                                            <span class="fw-bold @(detalle.Producto.Stock > 0 ? "text-success" : "text-danger")">
+                                                @detalle.Producto.Stock unidades
+                                            </span>
+                                        </div>
+                                        <div class="mb-1">
+                                            <span class="text-muted">Precio Venta Actual: </span>
+                                            <span class="fw-bold text-success">
+                                                @detalle.Producto.Precio.ToString("C2")
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen Financiero -->
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-calculator me-2"></i>
+                            Resumen Financiero
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <div class="display-6 text-primary fw-bold">
+                                @SubtotalCompra.ToString("C2")
+                            </div>
+                            <small class="text-muted">Subtotal de Compra</small>
+                        </div>
+
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted">Precio Compra Unitario:</td>
+                                <td class="text-end">@detalle.PrecioCompra.ToString("C2")</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Precio Venta Unitario:</td>
+                                <td class="text-end">@detalle.PrecioVentaActualizado.ToString("C2")</td>
+                            </tr>
+                            <tr class="border-top">
+                                <td class="text-muted">Margen por Unidad:</td>
+                                <td class="text-end fw-bold @(MargenUnidad >= 0 ? "text-success" : "text-danger")">
+                                    @MargenUnidad.ToString("C2")
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Margen Total:</td>
+                                <td class="text-end fw-bold @(MargenTotal >= 0 ? "text-success" : "text-danger")">
+                                    @MargenTotal.ToString("C2")
+                                </td>
+                            </tr>
+                            <tr class="border-top">
+                                <td class="text-muted">Porcentaje Ganancia:</td>
+                                <td class="text-end fw-bold @(PorcentajeGanancia >= 0 ? "text-success" : "text-danger")">
+                                    @PorcentajeGanancia.ToString("P2")
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Acciones Rápidas -->
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt me-2"></i>
+                            Acciones Rápidas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary btn-sm" @onclick="Editar">
+                                <i class="fas fa-edit me-1"></i>Editar Detalle
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" @onclick="IrAProducto">
+                                <i class="fas fa-external-link-alt me-1"></i>Ver Producto
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" @onclick="IrACompra">
+                                <i class="fas fa-receipt me-1"></i>Ver Compra Completa
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" @onclick="Eliminar">
+                                <i class="fas fa-trash me-1"></i>Eliminar Detalle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger text-center">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            No se encontró el detalle de compra solicitado.
+            <button class="btn btn-sm btn-outline-danger ms-2" @onclick="Volver">
+                Volver a la lista
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private CompraDetalle? detalle;
+    private bool cargando = true;
+
+    // Propiedades computadas
+    private decimal SubtotalCompra => detalle?.Cantidad * detalle?.PrecioCompra ?? 0;
+    private decimal MargenUnidad => (detalle?.PrecioVentaActualizado ?? 0) - (detalle?.PrecioCompra ?? 0);
+    private decimal MargenTotal => MargenUnidad * (detalle?.Cantidad ?? 0);
+    private decimal PorcentajeGanancia => detalle?.PrecioCompra > 0 ? MargenUnidad / detalle.PrecioCompra : 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDetalle();
+        cargando = false;
+    }
+
+    private async Task CargarDetalle()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<CompraDetalle>($"api/CompraDetalles/{Id}");
+            detalle = response;
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar el detalle: {ex.Message}");
+        }
+    }
+
+    private void Editar()
+    {
+        Navigation.NavigateTo($"/compra-detalle-editar/{Id}");
+    }
+
+    private void Volver()
+    {
+        if (detalle?.CompraId > 0)
+        {
+            Navigation.NavigateTo($"/compra-detalles/{detalle.CompraId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/compra-detalles");
+        }
+    }
+
+    private void IrAProducto()
+    {
+        if (detalle?.ProductoId > 0)
+        {
+            Navigation.NavigateTo($"/productos/{detalle.ProductoId}");
+        }
+    }
+
+    private void IrACompra()
+    {
+        if (detalle?.CompraId > 0)
+        {
+            Navigation.NavigateTo($"/compras/{detalle.CompraId}");
+        }
+    }
+
+    private async void Eliminar()
+    {
+        if (detalle == null) return;
+
+        bool confirmado = await JS.InvokeAsync<bool>("confirm",
+            $"¿Está seguro de eliminar el detalle de compra #{detalle.Id}?\n\n" +
+            $"Producto: {detalle.Producto?.Nombre}\n" +
+            $"Cantidad: {detalle.Cantidad}\n" +
+            $"Subtotal: {SubtotalCompra.ToString("C2")}\n\n" +
+            "Esta acción no se puede deshacer.");
+
+        if (confirmado)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"api/CompraDetalles/{Id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "Detalle de compra eliminado correctamente");
+                    Volver();
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "Error al eliminar el detalle de compra");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    // Clases para la entidad
+    public class CompraDetalle
+    {
+        public int Id { get; set; }
+        public int CompraId { get; set; }
+        public int ProductoId { get; set; }
+        public int Cantidad { get; set; }
+        public decimal PrecioCompra { get; set; }
+        public decimal PrecioVentaActualizado { get; set; }
+        public Compra? Compra { get; set; }
+        public Producto? Producto { get; set; }
+    }
+
+    public class Compra
+    {
+        public int Id { get; set; }
+        public DateTime FechaCompra { get; set; }
+    }
+
+    public class Producto
+    {
+        public int Id { get; set; }
+        public string? Nombre { get; set; }
+        public string? Descripcion { get; set; }
+        public decimal Precio { get; set; }
+        public int Stock { get; set; }
+        public string? ImagenUrl { get; set; }
+        public Categoria? Categoria { get; set; }
+    }
+
+    public class Categoria
+    {
+        public int Id { get; set; }
+        public string? Nombre { get; set; }
+    }
+}

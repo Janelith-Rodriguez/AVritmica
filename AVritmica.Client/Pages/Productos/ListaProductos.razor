@@ -3,7 +3,6 @@
 @inject ICategoriaService CategoriaService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
-@inject IDebugService DebugService
 
 <h3>Lista de Productos</h3>
 
@@ -121,22 +120,6 @@ else
         </div>
     }
 }
-
-<!-- Debug Section -->
-<div class="mt-4 border-top pt-3">
-    <h5>Debug</h5>
-    <button class="btn btn-warning btn-sm" @onclick="DebugError">
-        <i class="fas fa-bug"></i> Debug Error
-    </button>
-
-    @if (!string.IsNullOrEmpty(debugInfo))
-    {
-        <div class="alert alert-info mt-3">
-            <h6>Información de Debug:</h6>
-            <pre class="mt-2 p-2 bg-light border rounded" style="font-size: 0.8rem; max-height: 300px; overflow: auto;">@debugInfo</pre>
-        </div>
-    }
-</div>
 
 @code {
     private List<Producto> productos = new();
@@ -289,21 +272,4 @@ else
         }
     }
 
-    private async Task DebugError()
-    {
-        debugInfo = "Ejecutando debug...";
-        StateHasChanged();
-
-        try
-        {
-            var debugResult = await DebugService.DebugProductos();
-            debugInfo = debugResult;
-        }
-        catch (Exception ex)
-        {
-            debugInfo = $"Error en debug: {ex.Message}\n{ex.StackTrace}";
-        }
-        
-        StateHasChanged();
-    }
 }

@@ -25,11 +25,9 @@
                 <NavLink class="dropdown-item" href="categorias">
                     <span class="bi bi-tags" aria-hidden="true"></span> Categorías
                 </NavLink>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="productos">
-                        <span class="oi oi-list" aria-hidden="true"></span> Productos
-                    </NavLink>
-                </div>
+                <NavLink class="dropdown-item" href="productos">
+                    <span class="bi bi-list-ul" aria-hidden="true"></span> Productos
+                </NavLink>
                 <NavLink class="dropdown-item" href="stock-movimientos">
                     <span class="bi bi-arrow-left-right" aria-hidden="true"></span> Movimientos de Stock
                 </NavLink>
@@ -69,14 +67,14 @@
             </div>
         </div>
 
-        <!-- Gestión de Usuarios -->
+        <!-- Gestión de Usuarios (CORREGIDO) -->
         <div class="nav-item px-3">
             <div class="nav-link dropdown-toggle" @onclick="ToggleUsuariosMenu">
                 <span class="bi bi-people" aria-hidden="true"></span> Usuarios
             </div>
             <div class="dropdown-menu @(usuariosMenuOpen ? "show" : "")">
                 <NavLink class="dropdown-item" href="usuarios">
-                    <span class="bi bi-person" aria-hidden="true"></span> Usuarios
+                    <span class="bi bi-person-lines-fill" aria-hidden="true"></span> Gestión de Usuarios
                 </NavLink>
                 <NavLink class="dropdown-item" href="consultas">
                     <span class="bi bi-chat-left-text" aria-hidden="true"></span> Consultas
@@ -99,23 +97,12 @@
                 <NavLink class="dropdown-item" href="reporte-compras">
                     <span class="bi bi-cart-check" aria-hidden="true"></span> Compras
                 </NavLink>
+                <NavLink class="dropdown-item" href="reporte-usuarios">
+                    <span class="bi bi-people" aria-hidden="true"></span> Usuarios
+                </NavLink>
             </div>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="agregar-categorias-prueba">
-                <span class="oi oi-plus" aria-hidden="true"></span> Categorías Prueba
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="agregar-productos-prueba">
-                <span class="oi oi-plus" aria-hidden="true"></span> Productos Prueba
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="productos">
-                <span class="oi oi-list" aria-hidden="true"></span> Ver Productos
-            </NavLink>
-        </div>
+
         <!-- Páginas de Ejemplo (puedes eliminar estas) -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="counter">

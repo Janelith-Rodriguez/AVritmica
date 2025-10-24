@@ -117,14 +117,12 @@ namespace AVritmica.Server.Controllers
             }
         }
 
+        // Método POST original mantenido para compatibilidad
         [HttpPost]
         public async Task<ActionResult<int>> Post(CarritoProducto entidad)
         {
             try
             {
-                // Verificar si ya existe el producto en el carrito
-                // (El repositorio maneja esto automáticamente sumando las cantidades)
-
                 return await repositorio.Insert(entidad);
             }
             catch (Exception err)
@@ -133,6 +131,29 @@ namespace AVritmica.Server.Controllers
             }
         }
 
+        // Nuevo método POST que acepta DTO
+        [HttpPost("crear")]
+        public async Task<ActionResult<int>> CrearCarritoProducto([FromBody] CarritoProductoCreateRequest request)
+        {
+            try
+            {
+                var carritoProducto = new CarritoProducto
+                {
+                    CarritoId = request.CarritoId,
+                    ProductoId = request.ProductoId,
+                    Cantidad = request.Cantidad,
+                    PrecioUnitario = request.PrecioUnitario
+                };
+
+                return await repositorio.Insert(carritoProducto);
+            }
+            catch (Exception err)
+            {
+                return BadRequest(err.Message);
+            }
+        }
+
+        // Método PUT original mantenido para compatibilidad
         [HttpPut("{id:int}")] // api/CarritoProductos/2
         public async Task<ActionResult> Put(int id, [FromBody] CarritoProducto entidad)
         {
@@ -150,7 +171,53 @@ namespace AVritmica.Server.Controllers
                     return BadRequest("No se pudo actualizar el producto del carrito");
                 }
                 return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
 
+        // Nuevo método PUT que acepta DTO
+        [HttpPut("actualizar/{id:int}")]
+        public async Task<ActionResult> ActualizarCarritoProducto(int id, [FromBody] CarritoProductoUpdateRequest request)
+        {
+            try
+            {
+                if (id != request.Id)
+                {
+                    return BadRequest("Datos Incorrectos");
+                }
+
+                var carritoProductoExistente = await repositorio.SelectById(id);
+                if (carritoProductoExistente == null)
+                {
+                    return NotFound();
+                }
+
+                // Verificar si se está cambiando el carrito o producto a uno que ya existe
+                if (carritoProductoExistente.CarritoId != request.CarritoId ||
+                    carritoProductoExistente.ProductoId != request.ProductoId)
+                {
+                    var existe = await repositorio.Existe(request.CarritoId, request.ProductoId);
+                    if (existe && carritoProductoExistente.Id != id)
+                    {
+                        return BadRequest("Ya existe esa combinación carrito-producto");
+                    }
+                }
+
+                carritoProductoExistente.CarritoId = request.CarritoId;
+                carritoProductoExistente.ProductoId = request.ProductoId;
+                carritoProductoExistente.Cantidad = request.Cantidad;
+                carritoProductoExistente.PrecioUnitario = request.PrecioUnitario;
+
+                var resultado = await repositorio.Update(id, carritoProductoExistente);
+
+                if (!resultado)
+                {
+                    return BadRequest("No se pudo actualizar el producto del carrito");
+                }
+                return Ok();
             }
             catch (Exception e)
             {
@@ -179,5 +246,23 @@ namespace AVritmica.Server.Controllers
             }
             return Ok();
         }
+    }
+
+    // Clases DTO para crear y actualizar CarritoProducto
+    public class CarritoProductoCreateRequest
+    {
+        public int CarritoId { get; set; }
+        public int ProductoId { get; set; }
+        public int Cantidad { get; set; }
+        public decimal PrecioUnitario { get; set; }
+    }
+
+    public class CarritoProductoUpdateRequest
+    {
+        public int Id { get; set; }
+        public int CarritoId { get; set; }
+        public int ProductoId { get; set; }
+        public int Cantidad { get; set; }
+        public decimal PrecioUnitario { get; set; }
     }
 }

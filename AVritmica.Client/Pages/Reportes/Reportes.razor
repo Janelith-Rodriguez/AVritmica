@@ -1,0 +1,764 @@
+﻿@* @page "/reportes"
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject HttpClient Http
+
+<PageTitle>AVritmica - Reportes</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h3 class="text-primary">
+                <i class="fas fa-chart-bar me-2"></i>Reportes y Estadísticas
+            </h3>
+            <p class="text-muted">Gestión completa de reportes de tu tienda online</p>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Resumen -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Ventas Totales</h6>
+                            <h4>@estadisticasGenerales.TotalVentas.ToString("C2")</h4>
+                        </div>
+                        <div>
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                        </div>
+                    </div>
+                    <small>Últimos 30 días</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Compras Totales</h6>
+                            <h4>@estadisticasGenerales.TotalCompras.ToString("C2")</h4>
+                        </div>
+                        <div>
+                            <i class="fas fa-truck-loading fa-2x"></i>
+                        </div>
+                    </div>
+                    <small>Últimos 30 días</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Productos en Stock</h6>
+                            <h4>@estadisticasGenerales.TotalProductos</h4>
+                        </div>
+                        <div>
+                            <i class="fas fa-boxes fa-2x"></i>
+                        </div>
+                    </div>
+                    <small>Inventario actual</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Usuarios Activos</h6>
+                            <h4>@estadisticasGenerales.TotalUsuarios</h4>
+                        </div>
+                        <div>
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                    <small>Clientes registrados</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>Filtros de Reportes
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Tipo de Reporte</label>
+                    <select class="form-select" @bind="tipoReporteSeleccionado">
+                        <option value="ventas">Ventas</option>
+                        <option value="compras">Compras</option>
+                        <option value="stock">Stock</option>
+                        <option value="usuarios">Usuarios</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Desde</label>
+                    <input type="date" class="form-control" @bind="fechaDesde" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Hasta</label>
+                    <input type="date" class="form-control" @bind="fechaHasta" />
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" @onclick="GenerarReporte">
+                        <i class="fas fa-sync-alt me-1"></i>Generar Reporte
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte de Ventas -->
+    @if (tipoReporteSeleccionado == "ventas" && reporteVentas != null)
+    {
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Reporte de Ventas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <h3 class="text-success">@reporteVentas.TotalVentas.ToString("C2")</h3>
+                                <p class="mb-0">Total Vendido</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary">@reporteVentas.TotalPedidos</h3>
+                                <p class="mb-0">Pedidos Realizados</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <h3 class="text-info">@reporteVentas.PromedioVenta.ToString("C2")</h3>
+                                <p class="mb-0">Ticket Promedio</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <h3 class="text-warning">@reporteVentas.ProductoMasVendido</h3>
+                                <p class="mb-0">Producto Más Vendido</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h5>Ventas por Día</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th class="text-end">Total Ventas</th>
+                                <th class="text-end">N° Pedidos</th>
+                                <th class="text-end">Ticket Promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var venta in reporteVentas.VentasPorDia)
+                            {
+                                <tr>
+                                    <td>@venta.Fecha.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-end">@venta.Total.ToString("C2")</td>
+                                    <td class="text-end">@venta.CantidadPedidos</td>
+                                    <td class="text-end">@venta.TicketPromedio.ToString("C2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-3">
+                    <button class="btn btn-outline-success" @onclick="ExportarReporteVentas">
+                        <i class="fas fa-file-excel me-1"></i>Exportar a Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Reporte de Compras -->
+    @if (tipoReporteSeleccionado == "compras" && reporteCompras != null)
+    {
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-shopping-cart me-2"></i>Reporte de Compras
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary">@reporteCompras.TotalCompras.ToString("C2")</h3>
+                                <p class="mb-0">Total Comprado</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <h3 class="text-success">@reporteCompras.TotalComprasCount</h3>
+                                <p class="mb-0">Compras Realizadas</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <h3 class="text-info">@reporteCompras.PromedioCompra.ToString("C2")</h3>
+                                <p class="mb-0">Compra Promedio</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <h3 class="text-warning">@reporteCompras.ProductoMasComprado</h3>
+                                <p class="mb-0">Producto Más Comprado</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h5>Compras por Día</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th class="text-end">Total Compras</th>
+                                <th class="text-end">N° Compras</th>
+                                <th class="text-end">Compra Promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var compra in reporteCompras.ComprasPorDia)
+                            {
+                                <tr>
+                                    <td>@compra.Fecha.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-end">@compra.Total.ToString("C2")</td>
+                                    <td class="text-end">@compra.CantidadCompras</td>
+                                    <td class="text-end">@compra.CompraPromedio.ToString("C2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-3">
+                    <button class="btn btn-outline-primary" @onclick="ExportarReporteCompras">
+                        <i class="fas fa-file-excel me-1"></i>Exportar a Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Reporte de Stock -->
+    @if (tipoReporteSeleccionado == "stock" && reporteStock != null)
+    {
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-boxes me-2"></i>Reporte de Stock
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <h3 class="text-warning">@reporteStock.TotalProductos</h3>
+                                <p class="mb-0">Total Productos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <h3 class="text-success">@reporteStock.ProductosEnStock</h3>
+                                <p class="mb-0">Productos en Stock</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-danger">
+                            <div class="card-body text-center">
+                                <h3 class="text-danger">@reporteStock.ProductosSinStock</h3>
+                                <p class="mb-0">Productos Sin Stock</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <h3 class="text-info">@reporteStock.ValorTotalInventario.ToString("C2")</h3>
+                                <p class="mb-0">Valor Inventario</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h5>Productos por Categoría</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th class="text-end">Cantidad Productos</th>
+                                <th class="text-end">Stock Total</th>
+                                <th class="text-end">Valor Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var categoria in reporteStock.StockPorCategoria)
+                            {
+                                <tr>
+                                    <td>@categoria.CategoriaNombre</td>
+                                    <td class="text-end">@categoria.CantidadProductos</td>
+                                    <td class="text-end">@categoria.StockTotal</td>
+                                    <td class="text-end">@categoria.ValorTotal.ToString("C2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <h5 class="mt-4">Productos con Stock Bajo</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th class="text-end">Stock Actual</th>
+                                <th class="text-end">Stock Mínimo</th>
+                                <th class="text-end">Precio</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var producto in reporteStock.ProductosStockBajo)
+                            {
+                                <tr>
+                                    <td>@producto.Nombre</td>
+                                    <td>@producto.CategoriaNombre</td>
+                                    <td class="text-end">@producto.StockActual</td>
+                                    <td class="text-end">@producto.StockMinimo</td>
+                                    <td class="text-end">@producto.Precio.ToString("C2")</td>
+                                    <td>
+                                        <span class="badge bg-danger">Stock Bajo</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-3">
+                    <button class="btn btn-outline-warning" @onclick="ExportarReporteStock">
+                        <i class="fas fa-file-excel me-1"></i>Exportar a Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Reporte de Usuarios -->
+    @if (tipoReporteSeleccionado == "usuarios" && reporteUsuarios != null)
+    {
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>Reporte de Usuarios
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <h3 class="text-info">@reporteUsuarios.TotalUsuarios</h3>
+                                <p class="mb-0">Total Usuarios</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <h3 class="text-success">@reporteUsuarios.UsuariosActivos</h3>
+                                <p class="mb-0">Usuarios Activos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary">@reporteUsuarios.NuevosUsuariosMes</h3>
+                                <p class="mb-0">Nuevos Este Mes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <h3 class="text-warning">@reporteUsuarios.UsuarioTopCompras</h3>
+                                <p class="mb-0">Usuario Top</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h5>Registro de Usuarios por Mes</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Mes</th>
+                                <th class="text-end">Nuevos Usuarios</th>
+                                <th class="text-end">Total Usuarios</th>
+                                <th class="text-end">Crecimiento</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var usuario in reporteUsuarios.UsuariosPorMes)
+                            {
+                                <tr>
+                                    <td>@usuario.Mes</td>
+                                    <td class="text-end">@usuario.NuevosUsuarios</td>
+                                    <td class="text-end">@usuario.TotalUsuarios</td>
+                                    <td class="text-end">@usuario.Crecimiento.ToString("P2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <h5 class="mt-4">Top 10 Usuarios por Compras</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Email</th>
+                                <th class="text-end">Total Compras</th>
+                                <th class="text-end">N° Pedidos</th>
+                                <th class="text-end">Ticket Promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var usuario in reporteUsuarios.TopUsuarios)
+                            {
+                                <tr>
+                                    <td>@usuario.Nombre</td>
+                                    <td>@usuario.Email</td>
+                                    <td class="text-end">@usuario.TotalCompras.ToString("C2")</td>
+                                    <td class="text-end">@usuario.CantidadPedidos</td>
+                                    <td class="text-end">@usuario.TicketPromedio.ToString("C2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-3">
+                    <button class="btn btn-outline-info" @onclick="ExportarReporteUsuarios">
+                        <i class="fas fa-file-excel me-1"></i>Exportar a Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string tipoReporteSeleccionado = "ventas";
+    private DateTime fechaDesde = DateTime.Today.AddDays(-30);
+    private DateTime fechaHasta = DateTime.Today;
+
+    private EstadisticasGenerales estadisticasGenerales = new();
+    private ReporteVentas? reporteVentas;
+    private ReporteCompras? reporteCompras;
+    private ReporteStock? reporteStock;
+    private ReporteUsuarios? reporteUsuarios;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarEstadisticasGenerales();
+        await GenerarReporte();
+    }
+
+    private async Task CargarEstadisticasGenerales()
+    {
+        try
+        {
+            // Simular carga de estadísticas (debes implementar las APIs reales)
+            estadisticasGenerales = new EstadisticasGenerales
+            {
+                TotalVentas = 125000.50m,
+                TotalCompras = 85000.75m,
+                TotalProductos = 156,
+                TotalUsuarios = 89
+            };
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar estadísticas: {ex.Message}");
+        }
+    }
+
+    private async Task GenerarReporte()
+    {
+        try
+        {
+            switch (tipoReporteSeleccionado)
+            {
+                case "ventas":
+                    await CargarReporteVentas();
+                    break;
+                case "compras":
+                    await CargarReporteCompras();
+                    break;
+                case "stock":
+                    await CargarReporteStock();
+                    break;
+                case "usuarios":
+                    await CargarReporteUsuarios();
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al generar reporte: {ex.Message}");
+        }
+    }
+
+    private async Task CargarReporteVentas()
+    {
+        // Simular datos de ventas (implementa tu API real)
+        reporteVentas = new ReporteVentas
+        {
+            TotalVentas = 125000.50m,
+            TotalPedidos = 45,
+            PromedioVenta = 2777.78m,
+            ProductoMasVendido = "Laptop HP Pavilion",
+            VentasPorDia = new List<VentaPorDia>
+            {
+                new() { Fecha = DateTime.Today.AddDays(-5), Total = 8500.00m, CantidadPedidos = 3, TicketPromedio = 2833.33m },
+                new() { Fecha = DateTime.Today.AddDays(-4), Total = 12000.00m, CantidadPedidos = 4, TicketPromedio = 3000.00m },
+                new() { Fecha = DateTime.Today.AddDays(-3), Total = 7500.00m, CantidadPedidos = 2, TicketPromedio = 3750.00m },
+                new() { Fecha = DateTime.Today.AddDays(-2), Total = 9800.00m, CantidadPedidos = 3, TicketPromedio = 3266.67m },
+                new() { Fecha = DateTime.Today.AddDays(-1), Total = 11200.50m, CantidadPedidos = 4, TicketPromedio = 2800.13m }
+            }
+        };
+    }
+
+    private async Task CargarReporteCompras()
+    {
+        // Simular datos de compras (implementa tu API real)
+        reporteCompras = new ReporteCompras
+        {
+            TotalCompras = 85000.75m,
+            TotalComprasCount = 28,
+            PromedioCompra = 3035.74m,
+            ProductoMasComprado = "Mouse Inalámbrico",
+            ComprasPorDia = new List<CompraPorDia>
+            {
+                new() { Fecha = DateTime.Today.AddDays(-7), Total = 15000.00m, CantidadCompras = 5, CompraPromedio = 3000.00m },
+                new() { Fecha = DateTime.Today.AddDays(-6), Total = 12000.75m, CantidadCompras = 4, CompraPromedio = 3000.19m },
+                new() { Fecha = DateTime.Today.AddDays(-5), Total = 8000.00m, CantidadCompras = 3, CompraPromedio = 2666.67m },
+                new() { Fecha = DateTime.Today.AddDays(-4), Total = 25000.00m, CantidadCompras = 8, CompraPromedio = 3125.00m },
+                new() { Fecha = DateTime.Today.AddDays(-3), Total = 15000.00m, CantidadCompras = 5, CompraPromedio = 3000.00m }
+            }
+        };
+    }
+
+    private async Task CargarReporteStock()
+    {
+        // Simular datos de stock (implementa tu API real)
+        reporteStock = new ReporteStock
+        {
+            TotalProductos = 156,
+            ProductosEnStock = 142,
+            ProductosSinStock = 14,
+            ValorTotalInventario = 450000.00m,
+            StockPorCategoria = new List<StockCategoria>
+            {
+                new() { CategoriaNombre = "Electrónicos", CantidadProductos = 45, StockTotal = 320, ValorTotal = 250000.00m },
+                new() { CategoriaNombre = "Informática", CantidadProductos = 38, StockTotal = 280, ValorTotal = 120000.00m },
+                new() { CategoriaNombre = "Accesorios", CantidadProductos = 52, StockTotal = 650, ValorTotal = 65000.00m },
+                new() { CategoriaNombre = "Oficina", CantidadProductos = 21, StockTotal = 180, ValorTotal = 15000.00m }
+            },
+            ProductosStockBajo = new List<ProductoStockBajo>
+            {
+                new() { Nombre = "Teclado Mecánico", CategoriaNombre = "Informática", StockActual = 2, StockMinimo = 5, Precio = 150.00m },
+                new() { Nombre = "Monitor 24\"", CategoriaNombre = "Electrónicos", StockActual = 1, StockMinimo = 3, Precio = 1200.00m },
+                new() { Nombre = "Mouse Pad", CategoriaNombre = "Accesorios", StockActual = 3, StockMinimo = 10, Precio = 25.00m }
+            }
+        };
+    }
+
+    private async Task CargarReporteUsuarios()
+    {
+        // Simular datos de usuarios (implementa tu API real)
+        reporteUsuarios = new ReporteUsuarios
+        {
+            TotalUsuarios = 89,
+            UsuariosActivos = 76,
+            NuevosUsuariosMes = 12,
+            UsuarioTopCompras = "María González",
+            UsuariosPorMes = new List<UsuarioPorMes>
+            {
+                new() { Mes = "Enero 2024", NuevosUsuarios = 8, TotalUsuarios = 65, Crecimiento = 0.14m },
+                new() { Mes = "Febrero 2024", NuevosUsuarios = 12, TotalUsuarios = 77, Crecimiento = 0.18m },
+                new() { Mes = "Marzo 2024", NuevosUsuarios = 10, TotalUsuarios = 87, Crecimiento = 0.13m },
+                new() { Mes = "Abril 2024", NuevosUsuarios = 2, TotalUsuarios = 89, Crecimiento = 0.02m }
+            },
+            TopUsuarios = new List<TopUsuario>
+            {
+                new() { Nombre = "María González", Email = "maria@email.com", TotalCompras = 15000.00m, CantidadPedidos = 8, TicketPromedio = 1875.00m },
+                new() { Nombre = "Carlos López", Email = "carlos@email.com", TotalCompras = 12000.50m, CantidadPedidos = 6, TicketPromedio = 2000.08m },
+                new() { Nombre = "Ana Martínez", Email = "ana@email.com", TotalCompras = 9800.00m, CantidadPedidos = 5, TicketPromedio = 1960.00m }
+            }
+        };
+    }
+
+    private async Task ExportarReporteVentas()
+    {
+        await JS.InvokeVoidAsync("alert", "Exportando reporte de ventas a Excel...");
+    }
+
+    private async Task ExportarReporteCompras()
+    {
+        await JS.InvokeVoidAsync("alert", "Exportando reporte de compras a Excel...");
+    }
+
+    private async Task ExportarReporteStock()
+    {
+        await JS.InvokeVoidAsync("alert", "Exportando reporte de stock a Excel...");
+    }
+
+    private async Task ExportarReporteUsuarios()
+    {
+        await JS.InvokeVoidAsync("alert", "Exportando reporte de usuarios a Excel...");
+    }
+
+    // Clases para los reportes
+    public class EstadisticasGenerales
+    {
+        public decimal TotalVentas { get; set; }
+        public decimal TotalCompras { get; set; }
+        public int TotalProductos { get; set; }
+        public int TotalUsuarios { get; set; }
+    }
+
+    public class ReporteVentas
+    {
+        public decimal TotalVentas { get; set; }
+        public int TotalPedidos { get; set; }
+        public decimal PromedioVenta { get; set; }
+        public string ProductoMasVendido { get; set; } = string.Empty;
+        public List<VentaPorDia> VentasPorDia { get; set; } = new();
+    }
+
+    public class VentaPorDia
+    {
+        public DateTime Fecha { get; set; }
+        public decimal Total { get; set; }
+        public int CantidadPedidos { get; set; }
+        public decimal TicketPromedio { get; set; }
+    }
+
+    public class ReporteCompras
+    {
+        public decimal TotalCompras { get; set; }
+        public int TotalComprasCount { get; set; }
+        public decimal PromedioCompra { get; set; }
+        public string ProductoMasComprado { get; set; } = string.Empty;
+        public List<CompraPorDia> ComprasPorDia { get; set; } = new();
+    }
+
+    public class CompraPorDia
+    {
+        public DateTime Fecha { get; set; }
+        public decimal Total { get; set; }
+        public int CantidadCompras { get; set; }
+        public decimal CompraPromedio { get; set; }
+    }
+
+    public class ReporteStock
+    {
+        public int TotalProductos { get; set; }
+        public int ProductosEnStock { get; set; }
+        public int ProductosSinStock { get; set; }
+        public decimal ValorTotalInventario { get; set; }
+        public List<StockCategoria> StockPorCategoria { get; set; } = new();
+        public List<ProductoStockBajo> ProductosStockBajo { get; set; } = new();
+    }
+
+    public class StockCategoria
+    {
+        public string CategoriaNombre { get; set; } = string.Empty;
+        public int CantidadProductos { get; set; }
+        public int StockTotal { get; set; }
+        public decimal ValorTotal { get; set; }
+    }
+
+    public class ProductoStockBajo
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string CategoriaNombre { get; set; } = string.Empty;
+        public int StockActual { get; set; }
+        public int StockMinimo { get; set; }
+        public decimal Precio { get; set; }
+    }
+
+    public class ReporteUsuarios
+    {
+        public int TotalUsuarios { get; set; }
+        public int UsuariosActivos { get; set; }
+        public int NuevosUsuariosMes { get; set; }
+        public string UsuarioTopCompras { get; set; } = string.Empty;
+        public List<UsuarioPorMes> UsuariosPorMes { get; set; } = new();
+        public List<TopUsuario> TopUsuarios { get; set; } = new();
+    }
+
+    public class UsuarioPorMes
+    {
+        public string Mes { get; set; } = string.Empty;
+        public int NuevosUsuarios { get; set; }
+        public int TotalUsuarios { get; set; }
+        public decimal Crecimiento { get; set; }
+    }
+
+    public class TopUsuario
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public decimal TotalCompras { get; set; }
+        public int CantidadPedidos { get; set; }
+        public decimal TicketPromedio { get; set; }
+    }
+} *@

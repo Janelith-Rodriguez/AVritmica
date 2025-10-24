@@ -1,250 +1,202 @@
-﻿using AVritmica.BD.Data.Entity;
+﻿using Microsoft.AspNetCore.Mvc;
+using AVritmica.BD.Data.Entity;
 using AVritmica.Server.Repositorio;
-using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
+using AVritmica.Shared.DTO;
 
 namespace AVritmica.Server.Controllers
 {
     [ApiController]
-    [Route("api/Consultas")]
+    [Route("api/[controller]")]
     public class ConsultasController : ControllerBase
     {
-        private readonly IConsultaRepositorio repositorio;
+        private readonly IConsultaRepositorio _consultaRepositorio;
 
-        public ConsultasController(IConsultaRepositorio repositorio)
+        public ConsultasController(IConsultaRepositorio consultaRepositorio)
         {
-            this.repositorio = repositorio;
+            _consultaRepositorio = consultaRepositorio;
         }
 
-        [HttpGet]    // api/Consultas
-        public async Task<ActionResult<List<Consulta>>> Get()
-        {
-            return await repositorio.Select();
-        }
-
-        /// <summary>
-        /// Endpoint para obtener una consulta por ID
-        /// </summary>
-        /// <param name="id">Id de la consulta</param>
-        /// <returns></returns>
-        [HttpGet("{id:int}")] // api/Consultas/2
-        public async Task<ActionResult<Consulta>> Get(int id)
-        {
-            Consulta? consulta = await repositorio.SelectById(id);
-            if (consulta == null)
-            {
-                return NotFound();
-            }
-            return consulta;
-        }
-
-        [HttpGet("GetByUsuario/{usuarioId:int}")] // api/Consultas/GetByUsuario/1
-        public async Task<ActionResult<List<Consulta>>> GetByUsuario(int usuarioId)
-        {
-            var consultas = await repositorio.SelectByUsuario(usuarioId);
-            return consultas;
-        }
-
-        [HttpGet("GetByEmail/{email}")] // api/Consultas/GetByEmail/usuario@ejemplo.com
-        public async Task<ActionResult<List<Consulta>>> GetByEmail(string email)
-        {
-            var consultas = await repositorio.SelectByEmail(email);
-            return consultas;
-        }
-
-        [HttpGet("GetByRangoFechas")] // api/Consultas/GetByRangoFechas?fechaInicio=2024-01-01&fechaFin=2024-01-31
-        public async Task<ActionResult<List<Consulta>>> GetByRangoFechas([FromQuery] DateTime fechaInicio, [FromQuery] DateTime fechaFin)
-        {
-            // Validar que la fecha de inicio no sea mayor que la fecha fin
-            if (fechaInicio > fechaFin)
-            {
-                return BadRequest("La fecha de inicio no puede ser mayor que la fecha fin");
-            }
-
-            var consultas = await repositorio.SelectByRangoFechas(fechaInicio, fechaFin);
-            return consultas;
-        }
-
-        [HttpGet("GetNoLeidas")] // api/Consultas/GetNoLeidas
-        public async Task<ActionResult<List<Consulta>>> GetNoLeidas()
-        {
-            var consultas = await repositorio.SelectNoLeidas();
-            return consultas;
-        }
-
-        [HttpGet("existe/{id:int}")] // api/Consultas/existe/2
-        public async Task<ActionResult<bool>> Existe(int id)
-        {
-            return await repositorio.Existe(id);
-        }
-
-        [HttpGet("cantidad-no-leidas")] // api/Consultas/cantidad-no-leidas
-        public async Task<ActionResult<int>> ObtenerCantidadNoLeidas()
-        {
-            var cantidad = await repositorio.ObtenerCantidadNoLeidas();
-            return cantidad;
-        }
-
-        [HttpPost("marcar-leida/{id:int}")] // api/Consultas/marcar-leida/2
-        public async Task<ActionResult> MarcarComoLeida(int id)
+        [HttpGet]
+        public async Task<ActionResult<List<Consulta>>> GetConsultas()
         {
             try
             {
-                var resultado = await repositorio.MarcarComoLeida(id);
-                if (!resultado)
-                {
-                    return BadRequest("No se pudo marcar la consulta como leída");
-                }
-                return Ok();
+                var consultas = await _consultaRepositorio.Select();
+                return Ok(consultas);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(e.Message);
+                return BadRequest($"Error al obtener consultas: {ex.Message}");
             }
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Consulta>> GetConsulta(int id)
+        {
+            try
+            {
+                var consulta = await _consultaRepositorio.SelectById(id);
+                if (consulta == null)
+                    return NotFound();
+
+                return Ok(consulta);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al obtener consulta: {ex.Message}");
+            }
+        }
+
+        [HttpGet("usuario/{usuarioId}")]
+        public async Task<ActionResult<List<Consulta>>> GetConsultasPorUsuario(int usuarioId)
+        {
+            try
+            {
+                var consultas = await _consultaRepositorio.SelectByUsuario(usuarioId);
+                return Ok(consultas);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al obtener consultas del usuario: {ex.Message}");
+            }
+        }
+
+        [HttpGet("email/{email}")]
+        public async Task<ActionResult<List<Consulta>>> GetConsultasPorEmail(string email)
+        {
+            try
+            {
+                var consultas = await _consultaRepositorio.SelectByEmail(email);
+                return Ok(consultas);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al obtener consultas por email: {ex.Message}");
+            }
+        }
+
+        [HttpGet("no-leidas")]
+        public async Task<ActionResult<List<Consulta>>> GetConsultasNoLeidas()
+        {
+            try
+            {
+                var consultas = await _consultaRepositorio.SelectNoLeidas();
+                return Ok(consultas);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al obtener consultas no leídas: {ex.Message}");
+            }
+        }
+
+        [HttpGet("cantidad-no-leidas")]
+        public async Task<ActionResult<int>> GetCantidadNoLeidas()
+        {
+            try
+            {
+                var cantidad = await _consultaRepositorio.ObtenerCantidadNoLeidas();
+                return Ok(cantidad);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al obtener cantidad de consultas no leídas: {ex.Message}");
+            }
+        }
+
+        // ENDPOINT ORIGINAL (para compatibilidad)
         [HttpPost]
-        public async Task<ActionResult<int>> Post(Consulta entidad)
+        public async Task<ActionResult<Consulta>> PostConsulta(Consulta consulta)
         {
             try
             {
-                // Validar el formato del email
-                if (!IsValidEmail(entidad.Email))
-                {
-                    return BadRequest("El formato del email no es válido");
-                }
-
-                // Validar que los campos requeridos no estén vacíos
-                if (string.IsNullOrWhiteSpace(entidad.Nombre) ||
-                    string.IsNullOrWhiteSpace(entidad.Mensaje))
-                {
-                    return BadRequest("El nombre y el mensaje son obligatorios");
-                }
-
-                return await repositorio.Insert(entidad);
+                var id = await _consultaRepositorio.Insert(consulta);
+                var consultaCreada = await _consultaRepositorio.SelectById(id);
+                return CreatedAtAction(nameof(GetConsulta), new { id }, consultaCreada);
             }
-            catch (Exception err)
+            catch (Exception ex)
             {
-                return BadRequest(err.Message);
+                return BadRequest($"Error al crear la consulta: {ex.Message}");
             }
         }
 
-        [HttpPut("{id:int}")] // api/Consultas/2
-        public async Task<ActionResult> Put(int id, [FromBody] Consulta entidad)
+        // NUEVO ENDPOINT: Para consultas públicas (sin usuario)
+        [HttpPost("publica")]
+        public async Task<ActionResult<Consulta>> PostConsultaPublica(CrearConsultaDTO consultaDTO)
         {
             try
             {
-                if (id != entidad.Id)
+                if (!ModelState.IsValid)
                 {
-                    return BadRequest("Datos Incorrectos");
+                    return BadRequest(ModelState);
                 }
 
-                // Validar el formato del email
-                if (!IsValidEmail(entidad.Email))
-                {
-                    return BadRequest("El formato del email no es válido");
-                }
+                var id = await _consultaRepositorio.InsertConsultaPublica(
+                    consultaDTO.Nombre,
+                    consultaDTO.Email,
+                    consultaDTO.Mensaje
+                );
 
-                // Validar que los campos requeridos no estén vacíos
-                if (string.IsNullOrWhiteSpace(entidad.Nombre) ||
-                    string.IsNullOrWhiteSpace(entidad.Mensaje))
-                {
-                    return BadRequest("El nombre y el mensaje son obligatorios");
-                }
+                var consultaCreada = await _consultaRepositorio.SelectById(id);
+                return CreatedAtAction(nameof(GetConsulta), new { id }, consultaCreada);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al crear la consulta: {ex.Message}");
+            }
+        }
 
-                var resultado = await repositorio.Update(id, entidad);
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutConsulta(int id, Consulta consulta)
+        {
+            try
+            {
+                if (id != consulta.Id)
+                    return BadRequest("ID mismatch");
 
+                var resultado = await _consultaRepositorio.Update(id, consulta);
                 if (!resultado)
-                {
-                    return BadRequest("No se pudo actualizar la consulta");
-                }
-                return Ok();
+                    return NotFound();
 
+                return NoContent();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(e.Message);
+                return BadRequest($"Error al actualizar consulta: {ex.Message}");
             }
         }
 
-        [HttpDelete("{id:int}")] // api/Consultas/2
-        public async Task<ActionResult> Delete(int id)
-        {
-            var resp = await repositorio.Delete(id);
-            if (!resp)
-            {
-                return BadRequest("La consulta no se pudo borrar");
-            }
-            return Ok();
-        }
-
-        /// <summary>
-        /// Endpoint para enviar una consulta sin requerir autenticación
-        /// </summary>
-        [HttpPost("enviar-consulta")]
-        public async Task<ActionResult<int>> EnviarConsulta([FromBody] EnviarConsultaRequest request)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteConsulta(int id)
         {
             try
             {
-                // Validar el formato del email
-                if (!IsValidEmail(request.Email))
-                {
-                    return BadRequest("El formato del email no es válido");
-                }
+                var resultado = await _consultaRepositorio.Delete(id);
+                if (!resultado)
+                    return NotFound();
 
-                // Validar que los campos requeridos no estén vacíos
-                if (string.IsNullOrWhiteSpace(request.Nombre) ||
-                    string.IsNullOrWhiteSpace(request.Mensaje))
-                {
-                    return BadRequest("El nombre y el mensaje son obligatorios");
-                }
-
-                var consulta = new Consulta
-                {
-                    UsuarioId = request.UsuarioId, // Puede ser 0 si no hay usuario autenticado
-                    Nombre = request.Nombre,
-                    Email = request.Email,
-                    Mensaje = request.Mensaje,
-                    FechaEnvio = DateTime.UtcNow
-                };
-
-                return await repositorio.Insert(consulta);
+                return NoContent();
             }
-            catch (Exception err)
+            catch (Exception ex)
             {
-                return BadRequest(err.Message);
+                return BadRequest($"Error al eliminar consulta: {ex.Message}");
             }
         }
 
-        // Método auxiliar para validar email
-        private bool IsValidEmail(string email)
+        [HttpPost("marcar-leida/{id}")]
+        public async Task<IActionResult> MarcarComoLeida(int id)
         {
             try
             {
-                var addr = new System.Net.Mail.MailAddress(email);
-                return addr.Address == email;
+                var resultado = await _consultaRepositorio.MarcarComoLeida(id);
+                if (!resultado)
+                    return NotFound();
+
+                return NoContent();
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                return BadRequest($"Error al marcar consulta como leída: {ex.Message}");
             }
         }
-    }
-
-    // Clases auxiliares para requests
-    public class EnviarConsultaRequest
-    {
-        public int UsuarioId { get; set; }
-
-        [Required]
-        [MaxLength(100)]
-        public string Nombre { get; set; } = string.Empty;
-
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = string.Empty;
-
-        [Required]
-        public string Mensaje { get; set; } = string.Empty;
     }
 }

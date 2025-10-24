@@ -1,14 +1,9 @@
 ﻿@page "/compras"
-@using AVritmica.BD.Data.Entity
-@using AVritmica.Client.Servicios.Entidades
-@inject ICompraServicio compraServicio
-@inject NavigationManager navigation
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <h3>Gestión de Compras</h3>
-
-<button class="btn btn-primary mb-3" @onclick="NuevaCompra">
-    <i class="bi bi-cart-check"></i> Nueva Compra
-</button>
 
 @if (cargando)
 {
@@ -18,75 +13,137 @@
         </div>
     </div>
 }
-else if (error)
-{
-    <div class="alert alert-danger">
-        <h5>Error al cargar las compras</h5>
-        <p>@mensajeError</p>
-        <button class="btn btn-warning" @onclick="Recargar">Reintentar</button>
-    </div>
-}
-else if (compras == null || !compras.Any())
-{
-    <div class="alert alert-info">
-        No hay compras registradas.
-    </div>
-}
 else
 {
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Fecha</th>
-                    <th>Descripción</th>
-                    <th>Total</th>
-                    <th>Items</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var compra in compras)
-                {
-                    <tr>
-                        <td>@compra.Id</td>
-                        <td>@compra.FechaCompra.ToString("dd/MM/yyyy HH:mm")</td>
-                        <td>@compra.Descripcion</td>
-                        <td>
-                            @{
-                                var total = compra.CompraDetalles?.Sum(cd => cd.Cantidad * cd.PrecioCompra) ?? 0;
-                            }
-                            @total.ToString("C")
-                        </td>
-                        <td>
-                            <span class="badge bg-info">
-                                @(compra.CompraDetalles?.Count ?? 0) items
-                            </span>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-info" @onclick="() => VerDetalles(compra.Id)" title="Detalles">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-warning" @onclick="() => EditarCompra(compra.Id)" title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarCompra(compra)" title="Eliminar">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="mb-3">
+        <button class="btn btn-primary" @onclick="NuevaCompra">Nueva Compra</button>
+        <button class="btn btn-success" @onclick="CrearCompraConDetalles">Compra con Detalles</button>
+        <button class="btn btn-outline-secondary" @onclick="Refrescar">Refrescar</button>
     </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <input type="text" class="form-control" placeholder="Buscar por descripción..." @bind="terminoBusqueda" @oninput="OnBuscar" />
+        </div>
+        <div class="col-md-4">
+            <button class="btn btn-info w-100" @onclick="MostrarFiltroFechas">Filtrar por Fechas</button>
+        </div>
+        <div class="col-md-4">
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button class="btn btn-warning" @onclick="ExportarComprasCSV">Exportar</button>
+            </div>
+        </div>
+    </div>
+
+    @if (mostrarFiltroFechas)
+    {
+        <div class="row mb-3 p-3 border rounded bg-light">
+            <div class="col-md-4">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control" @bind="fechaInicio" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control" @bind="fechaFin" />
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-primary me-2" @onclick="AplicarFiltroFechas">Aplicar</button>
+                <button class="btn btn-secondary" @onclick="LimpiarFiltroFechas">Limpiar</button>
+            </div>
+        </div>
+    }
+
+    @if (compras?.Any() == true)
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha Compra</th>
+                        <th>Descripción</th>
+                        <th>Productos</th>
+                        <th>Cantidad Total</th>
+                        <th>Total Compra</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var compra in comprasFiltradas)
+                    {
+                        <tr>
+                            <td>@compra.Id</td>
+                            <td>@compra.FechaCompra.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (string.IsNullOrEmpty(compra.Descripcion))
+                                {
+                                    <span class="text-muted">Sin descripción</span>
+                                }
+                                else
+                                {
+                                    @compra.Descripcion
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">@compra.CompraDetalles.Count</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">@compra.CompraDetalles.Sum(cd => cd.Cantidad)</span>
+                            </td>
+                            <td>
+                                <strong>@compra.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra).ToString("C")</strong>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info" @onclick="() => VerDetalles(compra.Id)" title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning" @onclick="() => EditarCompra(compra.Id)" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => EliminarCompra(compra)" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" @onclick="() => VerDetallesCompra(compra.Id)" title="Ver productos">
+                                    <i class="fas fa-boxes"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="table-primary">
+                        <td colspan="4" class="text-end"><strong>Total General:</strong></td>
+                        <td><strong>@comprasFiltradas.Sum(c => c.CompraDetalles.Sum(cd => cd.Cantidad))</strong></td>
+                        <td><strong>@comprasFiltradas.Sum(c => c.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra)).ToString("C")</strong></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Resumen:</strong>
+            @comprasFiltradas.Count compras -
+            @comprasFiltradas.Sum(c => c.CompraDetalles.Count) productos -
+            Total: @comprasFiltradas.Sum(c => c.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra)).ToString("C")
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No se encontraron compras.
+        </div>
+    }
 }
 
 @code {
-    private List<Compra>? compras;
+    private List<Compra> compras = new();
+    private List<Compra> comprasFiltradas = new();
     private bool cargando = true;
-    private bool error = false;
-    private string mensajeError = "";
+    private string terminoBusqueda = string.Empty;
+    private bool mostrarFiltroFechas = false;
+    private DateTime fechaInicio = DateTime.Today.AddDays(-30);
+    private DateTime fechaFin = DateTime.Today;
 
     protected override async Task OnInitializedAsync()
     {
@@ -95,27 +152,17 @@ else
 
     private async Task CargarCompras()
     {
+        cargando = true;
+        StateHasChanged();
+
         try
         {
-            cargando = true;
-            error = false;
-            StateHasChanged();
-
-            var respuesta = await compraServicio.Get();
-            if (!respuesta.Error)
-            {
-                compras = respuesta.Respuesta;
-            }
-            else
-            {
-                error = true;
-                mensajeError = await respuesta.ObtenerError();
-            }
+            compras = await Http.GetFromJsonAsync<List<Compra>>("api/Compras") ?? new();
+            FiltrarCompras();
         }
         catch (Exception ex)
         {
-            error = true;
-            mensajeError = $"Error: {ex.Message}";
+            await JS.InvokeVoidAsync("alert", $"Error al cargar compras: {ex.Message}");
         }
         finally
         {
@@ -124,28 +171,241 @@ else
         }
     }
 
-    private void Recargar() => CargarCompras();
-    private void NuevaCompra() => navigation.NavigateTo("/compras/nuevo");
-    private void EditarCompra(int id) => navigation.NavigateTo($"/compras/editar/{id}");
-    private void VerDetalles(int id) => navigation.NavigateTo($"/compras/detalles/{id}");
-
-    private async Task EliminarCompra(Compra compra)
+    private void FiltrarCompras()
     {
-        if (await jsRuntime.InvokeAsync<bool>("confirm", $"¿Está seguro de eliminar la compra #{compra.Id}?"))
+        comprasFiltradas = compras;
+
+        if (!string.IsNullOrEmpty(terminoBusqueda))
         {
-            var respuesta = await compraServicio.Delete(compra.Id);
-            if (!respuesta.Error)
+            comprasFiltradas = comprasFiltradas.Where(c =>
+                c.Descripcion?.Contains(terminoBusqueda, StringComparison.OrdinalIgnoreCase) == true
+            ).ToList();
+        }
+    }
+
+    private void OnBuscar(ChangeEventArgs e)
+    {
+        terminoBusqueda = e.Value?.ToString() ?? string.Empty;
+        FiltrarCompras();
+    }
+
+    private void MostrarFiltroFechas()
+    {
+        mostrarFiltroFechas = !mostrarFiltroFechas;
+    }
+
+    private async Task AplicarFiltroFechas()
+    {
+        try
+        {
+            var comprasFiltradasPorFecha = await Http.GetFromJsonAsync<List<Compra>>(
+                $"api/Compras/GetByRangoFechas?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}");
+
+            if (comprasFiltradasPorFecha != null)
             {
-                await CargarCompras();
-                await jsRuntime.InvokeVoidAsync("alert", "Compra eliminada correctamente");
+                comprasFiltradas = comprasFiltradasPorFecha;
             }
-            else
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al filtrar por fechas: {ex.Message}");
+        }
+    }
+
+    private async Task LimpiarFiltroFechas()
+    {
+        fechaInicio = DateTime.Today.AddDays(-30);
+        fechaFin = DateTime.Today;
+        await CargarCompras();
+        FiltrarCompras();
+    }
+
+    private void NuevaCompra()
+    {
+        Navigation.NavigateTo("/compras/nuevo");
+    }
+
+    private async Task CrearCompraConDetalles()
+    {
+        var descripcion = await JS.InvokeAsync<string>("prompt", "Descripción de la compra:", "Compra de productos");
+
+        if (!string.IsNullOrEmpty(descripcion))
+        {
+            try
             {
-                var errorMsg = await respuesta.ObtenerError();
-                await jsRuntime.InvokeVoidAsync("alert", errorMsg);
+                var request = new
+                {
+                    FechaCompra = DateTime.UtcNow,
+                    Descripcion = descripcion,
+                    Detalles = new List<object>()
+                };
+
+                var response = await Http.PostAsJsonAsync("api/Compras/crear-con-detalles", request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var compraId = await response.Content.ReadFromJsonAsync<int>();
+                    await JS.InvokeVoidAsync("alert", "Compra creada correctamente. Ahora puede agregar productos.");
+                    Navigation.NavigateTo($"/compra-detalles?compraId={compraId}");
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    await JS.InvokeVoidAsync("alert", $"Error al crear compra: {error}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
             }
         }
     }
 
-    [Inject] private IJSRuntime jsRuntime { get; set; } = default!;
+    private void VerDetalles(int id)
+    {
+        Navigation.NavigateTo($"/compras/detalles/{id}");
+    }
+
+    private void EditarCompra(int id)
+    {
+        Navigation.NavigateTo($"/compras/editar/{id}");
+    }
+
+    private void VerDetallesCompra(int id)
+    {
+        Navigation.NavigateTo($"/compra-detalles?compraId={id}");
+    }
+
+    private async Task EliminarCompra(Compra compra)
+    {
+        bool confirmado = await JS.InvokeAsync<bool>("confirm",
+            $"¿Está seguro de eliminar la compra #{compra.Id} del {compra.FechaCompra.ToString("dd/MM/yyyy")}?\n\n" +
+            $"Esta acción eliminará {compra.CompraDetalles.Count} productos y no se puede deshacer.");
+
+        if (confirmado)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"api/Compras/{compra.Id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "Compra eliminada correctamente");
+                    await CargarCompras();
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "Error al eliminar la compra");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task ExportarComprasCSV()
+    {
+        try
+        {
+            // Crear contenido CSV
+            var csvContent = new System.Text.StringBuilder();
+
+            // Encabezados
+            csvContent.AppendLine("ID,Fecha,Descripción,Productos,Unidades,Total");
+
+            // Datos
+            foreach (var compra in comprasFiltradas)
+            {
+                var descripcion = (compra.Descripcion ?? "Sin descripción").Replace(",", ";");
+                var total = compra.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra);
+
+                csvContent.AppendLine(
+                    $"{compra.Id}," +
+                    $"{compra.FechaCompra:dd/MM/yyyy HH:mm}," +
+                    $"{descripcion}," +
+                    $"{compra.CompraDetalles.Count}," +
+                    $"{compra.CompraDetalles.Sum(cd => cd.Cantidad)}," +
+                    $"{total:F2}"
+                );
+            }
+
+            // Totales
+            var totalCompras = comprasFiltradas.Count;
+            var totalUnidades = comprasFiltradas.Sum(c => c.CompraDetalles.Sum(cd => cd.Cantidad));
+            var totalGeneral = comprasFiltradas.Sum(c => c.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra));
+
+            csvContent.AppendLine();
+            csvContent.AppendLine("RESUMEN");
+            csvContent.AppendLine($"Total Compras,{totalCompras}");
+            csvContent.AppendLine($"Total Unidades,{totalUnidades}");
+            csvContent.AppendLine($"Total General,{totalGeneral:F2}");
+
+            await JS.InvokeVoidAsync("descargarCSV", "compras.csv", csvContent.ToString());
+            await JS.InvokeVoidAsync("alert", "Archivo CSV descargado correctamente");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al exportar CSV: {ex.Message}");
+        }
+    }
+
+    // Método de respaldo para JSON (renombrado)
+    private async Task ExportarComprasJSONFallback()
+    {
+        try
+        {
+            var comprasExportar = comprasFiltradas.Select(c => new
+            {
+                ID = c.Id,
+                Fecha = c.FechaCompra.ToString("dd/MM/yyyy HH:mm"),
+                Descripcion = c.Descripcion ?? "Sin descripción",
+                Productos = c.CompraDetalles.Count,
+                Unidades = c.CompraDetalles.Sum(cd => cd.Cantidad),
+                Total = c.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra)
+            });
+
+            var json = System.Text.Json.JsonSerializer.Serialize(comprasExportar, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            await JS.InvokeVoidAsync("descargarArchivo", "compras.json", json);
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al exportar JSON: {ex.Message}");
+        }
+    }
+
+    private async Task DescargarArchivoSimple(string contenido, string nombreArchivo)
+    {
+        try
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(contenido);
+            var base64 = Convert.ToBase64String(bytes);
+
+            var js = $@"
+            var link = document.createElement('a');
+            link.href = 'data:application/json;base64,{base64}';
+            link.download = '{nombreArchivo}';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        ";
+
+            await JS.InvokeVoidAsync("eval", js);
+            await JS.InvokeVoidAsync("alert", "Archivo descargado correctamente");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error en descarga: {ex.Message}");
+        }
+    }
+
+    private async Task Refrescar()
+    {
+        await CargarCompras();
+    }
 }

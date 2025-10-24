@@ -1,0 +1,133 @@
+﻿@page "/carrito-productos/detalles/{id:int}"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<h3>Detalles del Producto en Carrito</h3>
+
+@if (cargando)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (carritoProducto == null)
+{
+    <div class="alert alert-danger">
+        Producto del carrito no encontrado
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Producto en Carrito #@carritoProducto.Id</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Información del Carrito</h6>
+                    <p><strong>Carrito ID:</strong> #@carritoProducto.CarritoId</p>
+                    <p><strong>Usuario:</strong> @carritoProducto.Carrito?.Usuario?.Nombre</p>
+                    <p><strong>Email:</strong> @carritoProducto.Carrito?.Usuario?.Email</p>
+                    <p>
+                        <strong>Estado Carrito:</strong>
+                        <span class="badge @GetEstadoBadgeClass(carritoProducto.Carrito?.Estado)">@carritoProducto.Carrito?.Estado</span>
+                    </p>
+                    <p><strong>Fecha Creación:</strong> @carritoProducto.Carrito?.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h6>Información del Producto</h6>
+                    <p><strong>Producto:</strong> @carritoProducto.Producto?.Nombre</p>
+                    <p><strong>Categoría:</strong> @carritoProducto.Producto?.Categoria?.Nombre</p>
+                    <p><strong>Descripción:</strong> @carritoProducto.Producto?.Descripcion</p>
+                    <p><strong>Precio Original:</strong> @carritoProducto.Producto?.Precio.ToString("C")</p>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Detalles de la Transacción</h6>
+                    <p><strong>Cantidad:</strong> @carritoProducto.Cantidad</p>
+                    <p><strong>Precio Unitario:</strong> @carritoProducto.PrecioUnitario.ToString("C")</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Resumen</h6>
+                    <div class="alert alert-success">
+                        <h6 class="alert-heading">Subtotal</h6>
+                        <h4>@((carritoProducto.Cantidad * carritoProducto.PrecioUnitario).ToString("C"))</h4>
+                        <small class="mb-0">@carritoProducto.Cantidad x @carritoProducto.PrecioUnitario.ToString("C")</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+            <button class="btn btn-primary" @onclick="Editar">Editar</button>
+            <button class="btn btn-info" @onclick="IrAlCarrito">Ver Carrito Completo</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private CarritoProducto? carritoProducto;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCarritoProducto();
+    }
+
+    private async Task CargarCarritoProducto()
+    {
+        try
+        {
+            carritoProducto = await Http.GetFromJsonAsync<CarritoProducto>($"api/CarritoProductos/{Id}");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar producto del carrito: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetEstadoBadgeClass(string? estado)
+    {
+        return estado switch
+        {
+            "Activo" => "bg-primary",
+            "Confirmado" => "bg-success",
+            "Cancelado" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void Volver()
+    {
+        Navigation.NavigateTo("/carrito-productos");
+    }
+
+    private void Editar()
+    {
+        Navigation.NavigateTo($"/carrito-productos/editar/{Id}");
+    }
+
+    private void IrAlCarrito()
+    {
+        if (carritoProducto?.CarritoId > 0)
+        {
+            Navigation.NavigateTo($"/carritos/detalles/{carritoProducto.CarritoId}");
+        }
+    }
+}

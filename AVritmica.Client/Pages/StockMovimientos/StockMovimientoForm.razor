@@ -1,0 +1,273 @@
+﻿@page "/stock-movimientos/nuevo"
+@page "/stock-movimientos/editar/{Id:int}"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<PageTitle>AVritmica - @Titulo</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">@Titulo</h3>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="movimientoRequest" OnValidSubmit="GuardarMovimiento">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Producto *</label>
+                                    <select class="form-select" @bind="movimientoRequest.ProductoId">
+                                        <option value="0">Seleccione un producto</option>
+                                        @foreach (var producto in productos)
+                                        {
+                                            <option value="@producto.Id">@producto.Nombre - Stock: @producto.Stock</option>
+                                        }
+                                    </select>
+                                    <ValidationMessage For="@(() => movimientoRequest.ProductoId)" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Tipo de Movimiento *</label>
+                                    <select class="form-select" @bind="movimientoRequest.TipoMovimiento">
+                                        <option value="">Seleccione tipo</option>
+                                        <option value="Entrada">Entrada</option>
+                                        <option value="Salida">Salida</option>
+                                        <option value="Compra">Compra</option>
+                                        <option value="Venta">Venta</option>
+                                        <option value="Ajuste Positivo">Ajuste Positivo</option>
+                                        <option value="Ajuste Negativo">Ajuste Negativo</option>
+                                    </select>
+                                    <ValidationMessage For="@(() => movimientoRequest.TipoMovimiento)" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Cantidad *</label>
+                                    <input type="number" class="form-control" @bind="movimientoRequest.Cantidad"
+                                           min="1" step="1" placeholder="Ingrese la cantidad" />
+                                    <ValidationMessage For="@(() => movimientoRequest.Cantidad)" />
+                                    <div class="form-text">
+                                        @if (productoSeleccionado != null && !string.IsNullOrEmpty(movimientoRequest.TipoMovimiento))
+                                        {
+                                            var stockDespues = movimientoRequest.TipoMovimiento switch
+                                            {
+                                                "Entrada" or "Compra" or "Ajuste Positivo" => productoSeleccionado.Stock + movimientoRequest.Cantidad,
+                                                "Salida" or "Venta" or "Ajuste Negativo" => productoSeleccionado.Stock - movimientoRequest.Cantidad,
+                                                _ => productoSeleccionado.Stock
+                                            };
+                                            <span>Stock después: <strong>@stockDespues</strong></span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Fecha</label>
+                                    <input type="datetime-local" class="form-control"
+                                           @bind="movimientoRequest.Fecha"
+                                           @bind:format="yyyy-MM-ddTHH:mm" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" @bind="movimientoRequest.Descripcion"
+                                      rows="3" placeholder="Descripción del movimiento (opcional)"></textarea>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(mensajeError))
+                        {
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i> @mensajeError
+                            </div>
+                        }
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success" disabled="@cargando">
+                                @if (cargando)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-save me-2"></i>
+                                }
+                                @(esEdicion ? "Actualizar Movimiento" : "Registrar Movimiento")
+                            </button>
+                            <button type="button" class="btn btn-secondary" @onclick="Cancelar" disabled="@cargando">
+                                <i class="fas fa-times me-2"></i> Cancelar
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private RegistrarMovimientoRequest movimientoRequest = new();
+    private List<Producto> productos = new();
+    private bool cargando = false;
+    private bool esEdicion => Id > 0;
+    private string Titulo => esEdicion ? "Editar Movimiento de Stock" : "Nuevo Movimiento de Stock";
+    private string mensajeError = "";
+
+    private Producto? productoSeleccionado => productos.FirstOrDefault(p => p.Id == movimientoRequest.ProductoId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarProductos();
+
+        if (esEdicion)
+        {
+            await CargarMovimientoParaEditar();
+        }
+        else
+        {
+            movimientoRequest.Fecha = DateTime.Now;
+        }
+    }
+
+    private async Task CargarProductos()
+    {
+        try
+        {
+            productos = await Http.GetFromJsonAsync<List<Producto>>("api/Productos") ?? new();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar productos: {ex.Message}";
+        }
+    }
+
+    private async Task CargarMovimientoParaEditar()
+    {
+        try
+        {
+            var movimiento = await Http.GetFromJsonAsync<StockMovimiento>($"api/StockMovimientos/{Id}");
+            if (movimiento != null)
+            {
+                movimientoRequest = new RegistrarMovimientoRequest
+                {
+                    ProductoId = movimiento.ProductoId,
+                    TipoMovimiento = movimiento.TipoMovimiento,
+                    Cantidad = movimiento.Cantidad,
+                    Descripcion = movimiento.Descripcion,
+                    Fecha = movimiento.Fecha
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar el movimiento: {ex.Message}";
+        }
+    }
+
+    private async Task GuardarMovimiento()
+    {
+        cargando = true;
+        mensajeError = "";
+        StateHasChanged();
+
+        try
+        {
+            // Validaciones adicionales
+            if (movimientoRequest.ProductoId == 0)
+            {
+                mensajeError = "Debe seleccionar un producto";
+                cargando = false;
+                StateHasChanged();
+                return;
+            }
+
+            if (movimientoRequest.Cantidad <= 0)
+            {
+                mensajeError = "La cantidad debe ser mayor a cero";
+                cargando = false;
+                StateHasChanged();
+                return;
+            }
+
+            HttpResponseMessage response;
+
+            if (esEdicion)
+            {
+                var movimientoExistente = await Http.GetFromJsonAsync<StockMovimiento>($"api/StockMovimientos/{Id}");
+                if (movimientoExistente != null)
+                {
+                    movimientoExistente.ProductoId = movimientoRequest.ProductoId;
+                    movimientoExistente.TipoMovimiento = movimientoRequest.TipoMovimiento;
+                    movimientoExistente.Cantidad = movimientoRequest.Cantidad;
+                    movimientoExistente.Descripcion = movimientoRequest.Descripcion;
+
+                    response = await Http.PutAsJsonAsync($"api/StockMovimientos/{Id}", movimientoExistente);
+                }
+                else
+                {
+                    mensajeError = "No se encontró el movimiento a editar";
+                    cargando = false;
+                    StateHasChanged();
+                    return;
+                }
+            }
+            else
+            {
+                // Para movimientos nuevos, usar el endpoint específico
+                response = await Http.PostAsJsonAsync("api/StockMovimientos/registrar-movimiento", movimientoRequest);
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                var mensaje = esEdicion ?
+                    "Movimiento actualizado correctamente" :
+                    "✅ Movimiento registrado correctamente";
+
+                await JS.InvokeVoidAsync("alert", mensaje);
+                Navigation.NavigateTo("/stock-movimientos");
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                mensajeError = $"❌ Error al {(esEdicion ? "actualizar" : "registrar")} el movimiento: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"❌ Error al {(esEdicion ? "actualizar" : "registrar")} el movimiento: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancelar()
+    {
+        Navigation.NavigateTo("/stock-movimientos");
+    }
+
+    // Clase para el request
+    public class RegistrarMovimientoRequest
+    {
+        public int ProductoId { get; set; }
+        public string TipoMovimiento { get; set; } = string.Empty;
+        public int Cantidad { get; set; }
+        public string Descripcion { get; set; } = string.Empty;
+        public DateTime Fecha { get; set; } = DateTime.Now;
+    }
+}

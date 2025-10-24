@@ -12,6 +12,7 @@ namespace AVritmica.Server.Repositorio
         Task<List<Consulta>> SelectNoLeidas();
         Task<bool> Existe(int id);
         Task<int> Insert(Consulta entidad);
+        Task<int> InsertConsultaPublica(string nombre, string email, string mensaje); // NUEVO MÉTODO
         Task<bool> Update(int id, Consulta entidad);
         Task<bool> Delete(int id);
         Task<bool> MarcarComoLeida(int id);

@@ -1,0 +1,182 @@
+﻿@page "/consultas/nueva"
+@page "/consultas/editar/{Id:int}"
+@using AVritmica.Shared.DTO
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<PageTitle>AVritmica - @Titulo</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">@Titulo</h3>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="consultaDto" OnValidSubmit="GuardarConsulta">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Nombre *</label>
+                                    <InputText @bind-Value="consultaDto.Nombre" class="form-control" placeholder="Ingrese su nombre" />
+                                    <ValidationMessage For="@(() => consultaDto.Nombre)" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Email *</label>
+                                    <InputText @bind-Value="consultaDto.Email" class="form-control" placeholder="ejemplo@correo.com" />
+                                    <ValidationMessage For="@(() => consultaDto.Email)" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Mensaje *</label>
+                            <InputTextArea @bind-Value="consultaDto.Mensaje" class="form-control"
+                                           placeholder="Describa su consulta, pregunta o comentario..."
+                                           rows="6" />
+                            <div class="form-text">Caracteres: @(consultaDto.Mensaje?.Length ?? 0)</div>
+                            <ValidationMessage For="@(() => consultaDto.Mensaje)" />
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(mensajeError))
+                        {
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i> @mensajeError
+                            </div>
+                        }
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success" disabled="@cargando">
+                                @if (cargando)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-paper-plane me-2"></i>
+                                }
+                                @(esEdicion ? "Actualizar Consulta" : "Enviar Consulta")
+                            </button>
+                            <button type="button" class="btn btn-secondary" @onclick="Cancelar" disabled="@cargando">
+                                <i class="fas fa-times me-2"></i> Cancelar
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private CrearConsultaDTO consultaDto = new();
+    private bool cargando = false;
+    private bool esEdicion => Id > 0;
+    private string Titulo => esEdicion ? "Editar Consulta" : "Nueva Consulta";
+    private string mensajeError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (esEdicion)
+        {
+            await CargarConsultaParaEditar();
+        }
+    }
+
+    private async Task CargarConsultaParaEditar()
+    {
+        try
+        {
+            var consulta = await Http.GetFromJsonAsync<Consulta>($"api/Consultas/{Id}");
+            if (consulta != null)
+            {
+                consultaDto = new CrearConsultaDTO
+                {
+                    Nombre = consulta.Nombre,
+                    Email = consulta.Email,
+                    Mensaje = consulta.Mensaje
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar la consulta: {ex.Message}";
+        }
+    }
+
+    private async Task GuardarConsulta()
+    {
+        cargando = true;
+        mensajeError = "";
+        StateHasChanged();
+
+        try
+        {
+            HttpResponseMessage response;
+
+            if (esEdicion)
+            {
+                // Para edición, necesitamos obtener la consulta existente y actualizarla
+                var consultaExistente = await Http.GetFromJsonAsync<Consulta>($"api/Consultas/{Id}");
+                if (consultaExistente != null)
+                {
+                    consultaExistente.Nombre = consultaDto.Nombre;
+                    consultaExistente.Email = consultaDto.Email;
+                    consultaExistente.Mensaje = consultaDto.Mensaje;
+
+                    response = await Http.PutAsJsonAsync($"api/Consultas/{Id}", consultaExistente);
+                }
+                else
+                {
+                    mensajeError = "No se encontró la consulta a editar";
+                    cargando = false;
+                    StateHasChanged();
+                    return;
+                }
+            }
+            else
+            {
+                // PARA CONSULTAS NUEVAS: Usar el endpoint corregido "publica"
+                response = await Http.PostAsJsonAsync("api/Consultas/publica", consultaDto);
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                var mensaje = esEdicion ?
+                    "Consulta actualizada correctamente" :
+                    "✅ Consulta enviada correctamente. Nos pondremos en contacto pronto.";
+
+                await JS.InvokeVoidAsync("alert", mensaje);
+                Navigation.NavigateTo("/consultas");
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                mensajeError = $"❌ Error al {(esEdicion ? "actualizar" : "enviar")} la consulta: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"❌ Error al {(esEdicion ? "actualizar" : "enviar")} la consulta: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancelar()
+    {
+        Navigation.NavigateTo("/consultas");
+    }
+}

@@ -153,6 +153,7 @@ namespace AVritmica.Server.Controllers
             }
         }
 
+        // Método POST original mantenido para compatibilidad
         [HttpPost]
         public async Task<ActionResult<int>> Post(Carrito entidad)
         {
@@ -172,6 +173,38 @@ namespace AVritmica.Server.Controllers
             }
         }
 
+        // Nuevo método POST que acepta DTO
+        [HttpPost("crear")]
+        public async Task<ActionResult<int>> CrearCarrito([FromBody] CarritoCreateRequest request)
+        {
+            try
+            {
+                // Verificar si el usuario ya tiene un carrito activo
+                if (request.Estado == "Activo" && await repositorio.ExisteCarritoActivo(request.UsuarioId))
+                {
+                    return BadRequest("El usuario ya tiene un carrito activo");
+                }
+
+                var carrito = new Carrito
+                {
+                    UsuarioId = request.UsuarioId,
+                    Estado = request.Estado,
+                    EstadoPago = request.EstadoPago,
+                    MontoTotal = request.MontoTotal,
+                    Saldo = request.Saldo,
+                    DireccionEnvio = request.DireccionEnvio,
+                    FechaCreacion = DateTime.UtcNow
+                };
+
+                return await repositorio.Insert(carrito);
+            }
+            catch (Exception err)
+            {
+                return BadRequest(err.Message);
+            }
+        }
+
+        // Método PUT original mantenido para compatibilidad
         [HttpPut("{id:int}")] // api/Carritos/2
         public async Task<ActionResult> Put(int id, [FromBody] Carrito entidad)
         {
@@ -207,6 +240,55 @@ namespace AVritmica.Server.Controllers
             }
         }
 
+        // Nuevo método PUT que acepta DTO
+        [HttpPut("actualizar/{id:int}")]
+        public async Task<ActionResult> ActualizarCarrito(int id, [FromBody] CarritoUpdateRequest request)
+        {
+            try
+            {
+                if (id != request.Id)
+                {
+                    return BadRequest("Datos Incorrectos");
+                }
+
+                var carritoExistente = await repositorio.SelectById(id);
+                if (carritoExistente == null)
+                {
+                    return NotFound();
+                }
+
+                // Validar que no se active otro carrito si ya existe uno activo
+                if (request.Estado == "Activo")
+                {
+                    var carritoActivo = await repositorio.SelectCarritoActivoByUsuario(request.UsuarioId);
+                    if (carritoActivo != null && carritoActivo.Id != id)
+                    {
+                        return BadRequest("El usuario ya tiene otro carrito activo");
+                    }
+                }
+
+                // Actualizar propiedades
+                carritoExistente.UsuarioId = request.UsuarioId;
+                carritoExistente.Estado = request.Estado;
+                carritoExistente.EstadoPago = request.EstadoPago;
+                carritoExistente.MontoTotal = request.MontoTotal;
+                carritoExistente.Saldo = request.Saldo;
+                carritoExistente.DireccionEnvio = request.DireccionEnvio;
+
+                var resultado = await repositorio.Update(id, carritoExistente);
+
+                if (!resultado)
+                {
+                    return BadRequest("No se pudo actualizar el carrito");
+                }
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
         [HttpDelete("{id:int}")] // api/Carritos/2
         public async Task<ActionResult> Delete(int id)
         {
@@ -223,6 +305,28 @@ namespace AVritmica.Server.Controllers
     public class ConfirmarCarritoRequest
     {
         public decimal MontoTotal { get; set; }
+        public string DireccionEnvio { get; set; } = string.Empty;
+    }
+
+    // Clases DTO para crear y actualizar carritos
+    public class CarritoCreateRequest
+    {
+        public int UsuarioId { get; set; }
+        public string Estado { get; set; } = "Activo";
+        public string EstadoPago { get; set; } = "Pendiente";
+        public decimal MontoTotal { get; set; }
+        public decimal Saldo { get; set; }
+        public string DireccionEnvio { get; set; } = string.Empty;
+    }
+
+    public class CarritoUpdateRequest
+    {
+        public int Id { get; set; }
+        public int UsuarioId { get; set; }
+        public string Estado { get; set; } = "Activo";
+        public string EstadoPago { get; set; } = "Pendiente";
+        public decimal MontoTotal { get; set; }
+        public decimal Saldo { get; set; }
         public string DireccionEnvio { get; set; } = string.Empty;
     }
 }

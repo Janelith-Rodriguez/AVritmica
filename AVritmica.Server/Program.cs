@@ -30,8 +30,9 @@ builder.Services.AddScoped<ICompraDetalleRepositorio, CompraDetalleRepositorio>(
 builder.Services.AddScoped<IConsultaRepositorio, ConsultaRepositorio>();
 builder.Services.AddScoped<IPagoRepositorio, PagoRepositorio>();
 builder.Services.AddScoped<IProductoRepositorio, ProductoRepositorio>();
+//builder.Services.AddScoped<IReporteRepositorio, ReporteRepositorio>();
 builder.Services.AddScoped<IStockMovimientoRepositorio, StockMovimientoRepositorio>();
-//builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 //--------------------------------------------------------------------
 //construcc�n de la aplicaci�n
 var app = builder.Build();

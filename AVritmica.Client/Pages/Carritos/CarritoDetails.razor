@@ -1,0 +1,187 @@
+﻿@page "/carritos/detalles/{id:int}"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<h3>Detalles del Carrito</h3>
+
+@if (cargando)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (carrito == null)
+{
+    <div class="alert alert-danger">
+        Carrito no encontrado
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Carrito #@carrito.Id</h5>
+                <div>
+                    <span class="badge @GetEstadoBadgeClass(carrito.Estado) me-2">@carrito.Estado</span>
+                    <span class="badge @GetEstadoPagoBadgeClass(carrito.EstadoPago)">@carrito.EstadoPago</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Usuario:</strong> @carrito.Usuario?.Nombre</p>
+                    <p><strong>Fecha Creación:</strong> @carrito.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p><strong>Fecha Confirmación:</strong> @(carrito.FechaConfirmacion?.ToString("dd/MM/yyyy HH:mm") ?? "No confirmado")</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Monto Total:</strong> @carrito.MontoTotal.ToString("C")</p>
+                    <p><strong>Saldo:</strong> @carrito.Saldo.ToString("C")</p>
+                    <p><strong>Dirección Envío:</strong> @carrito.DireccionEnvio</p>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <h6>Productos en el Carrito</h6>
+                @if (carrito.CarritoProductos?.Any() == true)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in carrito.CarritoProductos)
+                                {
+                                    <tr>
+                                        <td>@item.Producto?.Nombre</td>
+                                        <td>@item.Cantidad</td>
+                                        <td>@item.PrecioUnitario.ToString("C")</td>
+                                        <td>@((item.Cantidad * item.PrecioUnitario).ToString("C"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">No hay productos en el carrito</p>
+                }
+            </div>
+
+            <div class="mt-4">
+                <h6>Pagos</h6>
+                @if (carrito.Pagos?.Any() == true)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Monto</th>
+                                    <th>Fecha</th>
+                                    <th>Método</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var pago in carrito.Pagos)
+                                {
+                                    <tr>
+                                        <td>@pago.Id</td>
+                                        <td>@pago.MontoPagado.ToString("C")</td>
+                                        <td>@pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@pago.MetodoPago</td>
+                                        <td>
+                                            <span class="badge @GetEstadoPagoBadgeClass(pago.EstadoPago)">@pago.EstadoPago</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">No hay pagos registrados</p>
+                }
+            </div>
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+            <button class="btn btn-primary" @onclick="Editar">Editar</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Carrito? carrito;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCarrito();
+    }
+
+    private async Task CargarCarrito()
+    {
+        try
+        {
+            carrito = await Http.GetFromJsonAsync<Carrito>($"api/Carritos/{Id}");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar carrito: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetEstadoBadgeClass(string estado)
+    {
+        return estado switch
+        {
+            "Activo" => "bg-primary",
+            "Confirmado" => "bg-success",
+            "Cancelado" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetEstadoPagoBadgeClass(string estadoPago)
+    {
+        return estadoPago switch
+        {
+            "Pendiente" => "bg-warning",
+            "Pagado" => "bg-success",
+            "Parcial" => "bg-info",
+            "Cancelado" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void Volver()
+    {
+        Navigation.NavigateTo("/carritos");
+    }
+
+    private void Editar()
+    {
+        Navigation.NavigateTo($"/carritos/editar/{Id}");
+    }
+}

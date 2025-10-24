@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using AVritmica.BD.Data.Entity;
 using AVritmica.Server.Repositorio;
+using System.ComponentModel.DataAnnotations;
 
 namespace AVritmica.Server.Controllers
 {
@@ -138,13 +139,27 @@ namespace AVritmica.Server.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<int>> Post(CompraDetalle entidad)
+        public async Task<ActionResult<int>> Post(CompraDetalleDto dto)
         {
             try
             {
+                // Validar manualmente el DTO
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var entidad = new CompraDetalle
+                {
+                    CompraId = dto.CompraId,
+                    ProductoId = dto.ProductoId,
+                    Cantidad = dto.Cantidad,
+                    PrecioCompra = dto.PrecioCompra,
+                    PrecioVentaActualizado = dto.PrecioVentaActualizado
+                };
+
                 // Verificar si ya existe el producto en la compra
                 // (El repositorio maneja esto automáticamente sumando las cantidades)
-
                 return await repositorio.Insert(entidad);
             }
             catch (Exception err)
@@ -154,14 +169,30 @@ namespace AVritmica.Server.Controllers
         }
 
         [HttpPut("{id:int}")] // api/CompraDetalles/2
-        public async Task<ActionResult> Put(int id, [FromBody] CompraDetalle entidad)
+        public async Task<ActionResult> Put(int id, [FromBody] CompraDetalleDto dto)
         {
             try
             {
-                if (id != entidad.Id)
+                if (id != dto.Id)
                 {
                     return BadRequest("Datos Incorrectos");
                 }
+
+                // Validar manualmente el DTO
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var entidad = new CompraDetalle
+                {
+                    Id = dto.Id,
+                    CompraId = dto.CompraId,
+                    ProductoId = dto.ProductoId,
+                    Cantidad = dto.Cantidad,
+                    PrecioCompra = dto.PrecioCompra,
+                    PrecioVentaActualizado = dto.PrecioVentaActualizado
+                };
 
                 var resultado = await repositorio.Update(id, entidad);
 
@@ -170,7 +201,6 @@ namespace AVritmica.Server.Controllers
                     return BadRequest("No se pudo actualizar el detalle de compra");
                 }
                 return Ok();
-
             }
             catch (Exception e)
             {
@@ -199,12 +229,121 @@ namespace AVritmica.Server.Controllers
             }
             return Ok();
         }
+
+        // Métodos adicionales para mejor experiencia de usuario
+        [HttpGet("validar-combinacion")]
+        public async Task<ActionResult<ValidacionResponse>> ValidarCombinacion([FromQuery] int compraId, [FromQuery] int productoId, [FromQuery] int? excludeId = null)
+        {
+            try
+            {
+                var existe = await repositorio.Existe(compraId, productoId);
+
+                if (existe && excludeId.HasValue)
+                {
+                    // Si estamos editando, verificar si es el mismo registro
+                    var existente = await repositorio.SelectByCompraAndProducto(compraId, productoId);
+                    if (existente != null && existente.Id == excludeId.Value)
+                    {
+                        existe = false; // Es el mismo registro, permitir
+                    }
+                }
+
+                return new ValidacionResponse
+                {
+                    Existe = existe,
+                    Mensaje = existe ? "Ya existe un detalle con esta combinación de compra y producto" : "Combinación válida"
+                };
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al validar combinación: {ex.Message}");
+            }
+        }
+
+        // Método para obtener estadísticas rápidas
+        [HttpGet("estadisticas-compra/{compraId:int}")]
+        public async Task<ActionResult<EstadisticasCompraResponse>> GetEstadisticasCompra(int compraId)
+        {
+            try
+            {
+                var detalles = await repositorio.SelectByCompra(compraId);
+                var totalCompra = await repositorio.ObtenerTotalPorCompra(compraId);
+
+                return new EstadisticasCompraResponse
+                {
+                    TotalProductos = detalles.Count,
+                    TotalUnidades = detalles.Sum(d => d.Cantidad),
+                    TotalCompra = totalCompra,
+                    Productos = detalles.Select(d => new ProductoResumen
+                    {
+                        Nombre = d.Producto?.Nombre ?? "N/A",
+                        Cantidad = d.Cantidad,
+                        Subtotal = d.Cantidad * d.PrecioCompra
+                    }).ToList()
+                };
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al obtener estadísticas: {ex.Message}");
+            }
+        }
     }
 
-    // Clases auxiliares para requests
+    // Clases DTO para requests
+    public class CompraDetalleDto
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "La compra es requerida")]
+        [Range(1, int.MaxValue, ErrorMessage = "La compra es requerida")]
+        public int CompraId { get; set; }
+
+        [Required(ErrorMessage = "El producto es requerido")]
+        [Range(1, int.MaxValue, ErrorMessage = "El producto es requerido")]
+        public int ProductoId { get; set; }
+
+        [Required(ErrorMessage = "La cantidad es requerida")]
+        [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
+        public int Cantidad { get; set; }
+
+        [Required(ErrorMessage = "El precio de compra es requerido")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El precio de compra debe ser mayor a 0")]
+        public decimal PrecioCompra { get; set; }
+
+        [Required(ErrorMessage = "El precio de venta es requerido")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El precio de venta debe ser mayor a 0")]
+        public decimal PrecioVentaActualizado { get; set; }
+    }
+
     public class ActualizarPreciosRequest
     {
+        [Required(ErrorMessage = "El precio de compra es requerido")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El precio de compra debe ser mayor a 0")]
         public decimal PrecioCompra { get; set; }
+
+        [Required(ErrorMessage = "El precio de venta es requerido")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El precio de venta debe ser mayor a 0")]
         public decimal PrecioVentaActualizado { get; set; }
+    }
+
+    public class ValidacionResponse
+    {
+        public bool Existe { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+    }
+
+    public class EstadisticasCompraResponse
+    {
+        public int TotalProductos { get; set; }
+        public int TotalUnidades { get; set; }
+        public decimal TotalCompra { get; set; }
+        public List<ProductoResumen> Productos { get; set; } = new();
+    }
+
+    public class ProductoResumen
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public int Cantidad { get; set; }
+        public decimal Subtotal { get; set; }
     }
 }

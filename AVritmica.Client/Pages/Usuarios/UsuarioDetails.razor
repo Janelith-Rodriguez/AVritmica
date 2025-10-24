@@ -1,0 +1,244 @@
+﻿@page "/usuarios/detalles/{id:int}"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<h3>Detalles del Usuario</h3>
+
+@if (cargando)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (usuario == null)
+{
+    <div class="alert alert-danger">
+        Usuario no encontrado
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Información Personal</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>ID:</strong> @usuario.Id</p>
+                    <p><strong>Nombre:</strong> @usuario.Nombre @usuario.Apellido</p>
+                    <p><strong>Email:</strong> @usuario.Email</p>
+                    <p><strong>Teléfono:</strong> @(string.IsNullOrEmpty(usuario.Telefono) ? "No especificado" : usuario.Telefono)</p>
+                    <p><strong>Dirección:</strong> @(string.IsNullOrEmpty(usuario.Direccion) ? "No especificada" : usuario.Direccion)</p>
+                    <p>
+                        <strong>Tipo de Usuario:</strong>
+                        <span class="badge @GetTipoUsuarioBadgeClass(usuario.TipoUsuario)">@usuario.TipoUsuario</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Estadísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h4>@usuario.Carritos.Count</h4>
+                                    <small>Total Carritos</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h4>@usuario.Carritos.Count(c => c.Estado == "Activo")</h4>
+                                    <small>Carritos Activos</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <h6>Consultas Realizadas:</h6>
+                        <span class="badge bg-info">@usuario.Consultas.Count</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Historial de Carritos</h5>
+                    <span class="badge bg-primary">@usuario.Carritos.Count carritos</span>
+                </div>
+                <div class="card-body">
+                    @if (usuario.Carritos.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID Carrito</th>
+                                        <th>Estado</th>
+                                        <th>Estado Pago</th>
+                                        <th>Monto Total</th>
+                                        <th>Fecha Creación</th>
+                                        <th>Productos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var carrito in usuario.Carritos.OrderByDescending(c => c.FechaCreacion))
+                                    {
+                                        <tr>
+                                            <td>#@carrito.Id</td>
+                                            <td>
+                                                <span class="badge @GetEstadoBadgeClass(carrito.Estado)">@carrito.Estado</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetEstadoPagoBadgeClass(carrito.EstadoPago)">@carrito.EstadoPago</span>
+                                            </td>
+                                            <td>@carrito.MontoTotal.ToString("C")</td>
+                                            <td>@carrito.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                <span class="badge bg-secondary">@carrito.CarritoProductos.Count</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">El usuario no tiene carritos registrados.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <button class="btn btn-secondary" @onclick="Volver">Volver</button>
+        <button class="btn btn-primary" @onclick="Editar">Editar</button>
+        <button class="btn btn-info" @onclick="VerCarritos">Ver Carritos</button>
+        <button class="btn btn-warning" @onclick="CambiarTipo">Cambiar Tipo</button>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Usuario? usuario;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarUsuario();
+    }
+
+    private async Task CargarUsuario()
+    {
+        try
+        {
+            usuario = await Http.GetFromJsonAsync<Usuario>($"api/Usuarios/{Id}");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar usuario: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetTipoUsuarioBadgeClass(string tipoUsuario)
+    {
+        return tipoUsuario switch
+        {
+            "Administrador" => "bg-danger",
+            "Vendedor" => "bg-warning",
+            "Cliente" => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetEstadoBadgeClass(string estado)
+    {
+        return estado switch
+        {
+            "Activo" => "bg-primary",
+            "Confirmado" => "bg-success",
+            "Cancelado" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetEstadoPagoBadgeClass(string estadoPago)
+    {
+        return estadoPago switch
+        {
+            "Pendiente" => "bg-warning",
+            "Pagado" => "bg-success",
+            "Parcial" => "bg-info",
+            "Cancelado" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void Volver()
+    {
+        Navigation.NavigateTo("/usuarios");
+    }
+
+    private void Editar()
+    {
+        Navigation.NavigateTo($"/usuarios/editar/{Id}");
+    }
+
+    private void VerCarritos()
+    {
+        Navigation.NavigateTo($"/carritos?usuarioId={Id}");
+    }
+
+    private async Task CambiarTipo()
+    {
+        if (usuario != null)
+        {
+            var nuevoTipo = await JS.InvokeAsync<string>("prompt", "Ingrese el nuevo tipo de usuario:", usuario.TipoUsuario);
+
+            if (!string.IsNullOrEmpty(nuevoTipo))
+            {
+                try
+                {
+                    var response = await Http.PostAsJsonAsync($"api/Usuarios/actualizar-tipo-usuario/{Id}", nuevoTipo);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        await JS.InvokeVoidAsync("alert", "Tipo de usuario actualizado correctamente");
+                        await CargarUsuario();
+                    }
+                    else
+                    {
+                        await JS.InvokeVoidAsync("alert", "Error al actualizar el tipo de usuario");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+                }
+            }
+        }
+    }
+}

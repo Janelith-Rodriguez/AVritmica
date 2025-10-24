@@ -13,10 +13,6 @@ namespace AVritmica.BD.Data.Entity
     [Index(nameof(FechaEnvio), Name = "IX_Consultas_FechaEnvio")]
     public class Consulta : EntityBase
     {
-        // Clave foránea
-        public int UsuarioId { get; set; }
-        public Usuario Usuario { get; set; }
-
         [Required]
         [MaxLength(100)]
         public string Nombre { get; set; } = string.Empty;
@@ -28,9 +24,13 @@ namespace AVritmica.BD.Data.Entity
         [Required]
         public string Mensaje { get; set; } = string.Empty;
 
-        public DateTime FechaEnvio { get; set; } = DateTime.UtcNow;
+        public bool? Leida { get; set; } = false;
 
-        // Nueva propiedad
-        public bool Leida { get; set; } = false;
+        public DateTime FechaEnvio { get; set; } = DateTime.Now;
+
+        // ESTO DEBE SER NULLABLE
+        public int? UsuarioId { get; set; }  // ← Cambiar a nullable
+
+        public virtual Usuario? Usuario { get; set; }  // ← También nullable
     }
 }

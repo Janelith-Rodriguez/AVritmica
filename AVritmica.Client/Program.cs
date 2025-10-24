@@ -17,7 +17,6 @@ builder.Services.AddScoped(sp => new HttpClient
 builder.Services.AddScoped<IHttpServicio, HttpServicio>();
 
 // Servicios de entidades - SOLO ESTA LÍNEA para ProductoServicio
-builder.Services.AddScoped<IDebugService, DebugService>();
 builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<ICarritoServicio, CarritoServicio>();

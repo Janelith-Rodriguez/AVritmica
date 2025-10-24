@@ -17,6 +17,7 @@ namespace AVritmica.BD.Data
         public DbSet<CompraDetalle> CompraDetalles { get; set; }
         public DbSet<Consulta> Consultas { get; set; }
         public DbSet<Pago> Pagos { get; set; }
+        //public DbSet<Reporte> Reportes { get; set; }
         public DbSet<Producto> Productos { get; set; }
         public DbSet<StockMovimiento> StockMovimientos { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }

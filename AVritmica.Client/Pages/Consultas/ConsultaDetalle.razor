@@ -1,0 +1,243 @@
+﻿@page "/consultas/detalles/{Id:int}"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+@if (cargando)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (consulta == null)
+{
+    <div class="alert alert-danger">
+        <h4>Consulta no encontrada</h4>
+        <p>La consulta solicitada no existe.</p>
+        <button class="btn btn-primary" @onclick="VolverALista">Volver a la lista</button>
+    </div>
+}
+else
+{
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h3>Consulta #@consulta.Id</h3>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-secondary" @onclick="VolverALista">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+            <button class="btn btn-warning" @onclick="EditarConsulta">
+                <i class="fas fa-edit"></i> Editar
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Mensaje de la Consulta</h5>
+                    @if (!(consulta.Leida ?? false)) // CORREGIDO
+                    {
+                        <button class="btn btn-sm btn-success" @onclick="MarcarComoLeida">
+                            <i class="fas fa-check"></i> Marcar como Leída
+                        </button>
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>Mensaje:</h6>
+                        <div class="border rounded p-3 bg-light">
+                            @consulta.Mensaje
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button class="btn btn-primary" @onclick="ResponderConsulta">
+                            <i class="fas fa-reply"></i> Responder por Email
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Información del Contacto</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">Nombre:</th>
+                            <td>@consulta.Nombre</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>
+                                <a href="mailto:@consulta.Email" class="text-decoration-none">
+                                    <i class="fas fa-envelope"></i> @consulta.Email
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Fecha:</th>
+                            <td>@consulta.FechaEnvio.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                        <tr>
+                            <th>Estado:</th>
+                            <td>
+                                @if (consulta.Leida ?? false) // CORREGIDO
+                                {
+                                    <span class="badge bg-success">Leída</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">No Leída</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Usuario:</th>
+                            <td>
+                                @if (consulta.Usuario != null)
+                                {
+                                    <span class="badge bg-primary">@consulta.Usuario.Nombre</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Visitante</span>
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Acciones Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" @onclick="ResponderConsulta">
+                            <i class="fas fa-reply"></i> Responder
+                        </button>
+                        <button class="btn btn-outline-warning" @onclick="EditarConsulta">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn btn-outline-danger" @onclick="EliminarConsulta">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Consulta? consulta;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarConsulta();
+    }
+
+    private async Task CargarConsulta()
+    {
+        cargando = true;
+        try
+        {
+            consulta = await Http.GetFromJsonAsync<Consulta>($"api/Consultas/{Id}");
+
+            // Si la consulta no está leída, marcarla como leída al verla - CORREGIDO
+            if (consulta != null && !(consulta.Leida ?? false))
+            {
+                await Http.PostAsync($"api/Consultas/marcar-leida/{Id}", null);
+                consulta.Leida = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar consulta: {ex.Message}");
+        }
+        cargando = false;
+    }
+
+    private async Task MarcarComoLeida()
+    {
+        try
+        {
+            var response = await Http.PostAsync($"api/Consultas/marcar-leida/{Id}", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                consulta!.Leida = true;
+                StateHasChanged();
+                await JS.InvokeVoidAsync("alert", "Consulta marcada como leída");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "Error al marcar la consulta como leída");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private async Task ResponderConsulta()
+    {
+        var asunto = $"Re: Consulta #{consulta!.Id} - AVritmica";
+        var cuerpo = $"\n\n----------------------------------------\nConsulta original de {consulta.Nombre}:\n{consulta.Mensaje}";
+
+        var mailtoLink = $"mailto:{consulta.Email}?subject={Uri.EscapeDataString(asunto)}&body={Uri.EscapeDataString(cuerpo)}";
+        await JS.InvokeVoidAsync("open", mailtoLink, "_blank");
+    }
+
+    private void EditarConsulta()
+    {
+        Navigation.NavigateTo($"/consultas/editar/{Id}");
+    }
+
+    private async Task EliminarConsulta()
+    {
+        var confirmado = await JS.InvokeAsync<bool>("confirm",
+            $"¿Está seguro de eliminar la consulta de {consulta!.Nombre}?");
+
+        if (confirmado)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"api/Consultas/{Id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "Consulta eliminada correctamente");
+                    VolverALista();
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "Error al eliminar la consulta");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private void VolverALista()
+    {
+        Navigation.NavigateTo("/consultas");
+    }
+}

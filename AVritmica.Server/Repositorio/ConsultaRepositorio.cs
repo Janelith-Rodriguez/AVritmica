@@ -58,11 +58,9 @@ namespace AVritmica.Server.RepositorioImplementacion
 
         public async Task<List<Consulta>> SelectNoLeidas()
         {
-            // Asumiendo que tendrías un campo "Leida" en tu entidad Consulta
-            // Si no lo tienes, podemos agregarlo o usar otro criterio
             return await _context.Consultas
                 .Include(c => c.Usuario)
-                .Where(x => !x.Leida) // Asumiendo que existe la propiedad Leida
+                .Where(x => !(x.Leida ?? false))
                 .OrderByDescending(c => c.FechaEnvio)
                 .ToListAsync();
         }
@@ -75,12 +73,70 @@ namespace AVritmica.Server.RepositorioImplementacion
 
         public async Task<int> Insert(Consulta entidad)
         {
-            // Asegurar que la fecha de envío sea la actual
-            entidad.FechaEnvio = DateTime.UtcNow;
+            try
+            {
+                // Asegurar valores por defecto
+                entidad.FechaEnvio = DateTime.UtcNow;
 
-            await _context.Consultas.AddAsync(entidad);
-            await _context.SaveChangesAsync();
-            return entidad.Id;
+                // Si UsuarioId es 0, establecer como null
+                if (entidad.UsuarioId == 0)
+                {
+                    entidad.UsuarioId = null;
+                }
+
+                // Verificar si el usuario existe si se proporciona un ID
+                if (entidad.UsuarioId.HasValue && entidad.UsuarioId.Value > 0)
+                {
+                    var usuarioExiste = await _context.Usuarios
+                        .AnyAsync(u => u.Id == entidad.UsuarioId.Value);
+
+                    if (!usuarioExiste)
+                    {
+                        entidad.UsuarioId = null;
+                    }
+                }
+
+                if (!entidad.Leida.HasValue)
+                {
+                    entidad.Leida = false;
+                }
+
+                await _context.Consultas.AddAsync(entidad);
+                await _context.SaveChangesAsync();
+                return entidad.Id;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en Insert: {ex.Message}");
+                Console.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
+                throw;
+            }
+        }
+
+        // NUEVO MÉTODO: Específico para consultas públicas
+        public async Task<int> InsertConsultaPublica(string nombre, string email, string mensaje)
+        {
+            try
+            {
+                var consulta = new Consulta
+                {
+                    Nombre = nombre,
+                    Email = email,
+                    Mensaje = mensaje,
+                    FechaEnvio = DateTime.UtcNow,
+                    UsuarioId = null, // Siempre null para consultas públicas
+                    Leida = false
+                };
+
+                await _context.Consultas.AddAsync(consulta);
+                await _context.SaveChangesAsync();
+                return consulta.Id;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en InsertConsultaPublica: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<bool> Update(int id, Consulta entidad)
@@ -91,11 +147,10 @@ namespace AVritmica.Server.RepositorioImplementacion
             if (consultaExistente == null)
                 return false;
 
-            consultaExistente.UsuarioId = entidad.UsuarioId;
             consultaExistente.Nombre = entidad.Nombre;
             consultaExistente.Email = entidad.Email;
             consultaExistente.Mensaje = entidad.Mensaje;
-            // No actualizamos FechaEnvio para mantener la fecha original
+            consultaExistente.Leida = entidad.Leida;
 
             _context.Consultas.Update(consultaExistente);
             await _context.SaveChangesAsync();
@@ -123,7 +178,7 @@ namespace AVritmica.Server.RepositorioImplementacion
             if (consulta == null)
                 return false;
 
-            consulta.Leida = true; // Asumiendo que existe la propiedad Leida
+            consulta.Leida = true;
             _context.Consultas.Update(consulta);
             await _context.SaveChangesAsync();
             return true;
@@ -132,7 +187,7 @@ namespace AVritmica.Server.RepositorioImplementacion
         public async Task<int> ObtenerCantidadNoLeidas()
         {
             return await _context.Consultas
-                .Where(x => !x.Leida) // Asumiendo que existe la propiedad Leida
+                .Where(x => !(x.Leida ?? false))
                 .CountAsync();
         }
     }

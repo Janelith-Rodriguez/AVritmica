@@ -1,0 +1,215 @@
+﻿@page "/stock-movimientos/detalles/{Id:int}"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<PageTitle>AVritmica - Detalle Movimiento Stock</PageTitle>
+
+@if (cargando)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else if (movimiento == null)
+{
+    <div class="alert alert-danger">
+        <h4>Movimiento no encontrado</h4>
+        <p>El movimiento de stock solicitado no existe.</p>
+        <button class="btn btn-primary" @onclick="VolverALista">Volver a la lista</button>
+    </div>
+}
+else
+{
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h3>Movimiento de Stock #@movimiento.Id</h3>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-secondary" @onclick="VolverALista">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+            <button class="btn btn-warning" @onclick="EditarMovimiento">
+                <i class="fas fa-edit"></i> Editar
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Información del Movimiento</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>Descripción:</h6>
+                        <div class="border rounded p-3 bg-light">
+                            @(string.IsNullOrEmpty(movimiento.Descripcion) ? "Sin descripción" : movimiento.Descripcion)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Detalles del Movimiento</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="40%">Producto:</th>
+                            <td>
+                                <strong>@movimiento.Producto?.Nombre</strong>
+                                <br />
+                                <small class="text-muted">@movimiento.Producto?.Categoria?.Nombre</small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Tipo:</th>
+                            <td>
+                                <span class="badge @GetBadgeClass(movimiento.TipoMovimiento)">
+                                    @movimiento.TipoMovimiento
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Cantidad:</th>
+                            <td>
+                                <span class="@GetCantidadClass(movimiento.TipoMovimiento)">
+                                    @(movimiento.TipoMovimiento.Contains("Entrada") || movimiento.TipoMovimiento.Contains("Positivo") || movimiento.TipoMovimiento == "Compra" ? "+" : "-")@movimiento.Cantidad
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Fecha:</th>
+                            <td>@movimiento.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                        <tr>
+                            <th>Stock Actual:</th>
+                            <td>
+                                <span class="badge bg-dark">@(movimiento.Producto?.Stock ?? 0)</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Acciones Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-warning" @onclick="EditarMovimiento">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn btn-outline-danger" @onclick="EliminarMovimiento">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                        <button class="btn btn-outline-info" @onclick="VerProducto">
+                            <i class="fas fa-box"></i> Ver Producto
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private StockMovimiento? movimiento;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarMovimiento();
+    }
+
+    private async Task CargarMovimiento()
+    {
+        cargando = true;
+        try
+        {
+            movimiento = await Http.GetFromJsonAsync<StockMovimiento>($"api/StockMovimientos/{Id}");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar movimiento: {ex.Message}");
+        }
+        cargando = false;
+    }
+
+    private void EditarMovimiento()
+    {
+        Navigation.NavigateTo($"/stock-movimientos/editar/{Id}");
+    }
+
+    private async Task EliminarMovimiento()
+    {
+        var confirmado = await JS.InvokeAsync<bool>("confirm",
+            $"¿Está seguro de eliminar este movimiento de stock?");
+
+        if (confirmado)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"api/StockMovimientos/{Id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "Movimiento eliminado correctamente");
+                    VolverALista();
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "Error al eliminar el movimiento");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private void VerProducto()
+    {
+        if (movimiento?.ProductoId > 0)
+        {
+            Navigation.NavigateTo($"/productos/detalles/{movimiento.ProductoId}");
+        }
+    }
+
+    private void VolverALista()
+    {
+        Navigation.NavigateTo("/stock-movimientos");
+    }
+
+    // Métodos auxiliares para estilos
+    private string GetBadgeClass(string tipoMovimiento)
+    {
+        return tipoMovimiento switch
+        {
+            "Entrada" or "Compra" or "Ajuste Positivo" => "bg-success",
+            "Salida" or "Venta" or "Ajuste Negativo" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetCantidadClass(string tipoMovimiento)
+    {
+        return tipoMovimiento switch
+        {
+            "Entrada" or "Compra" or "Ajuste Positivo" => "text-success fw-bold",
+            "Salida" or "Venta" or "Ajuste Negativo" => "text-danger fw-bold",
+            _ => "text-muted"
+        };
+    }
+}

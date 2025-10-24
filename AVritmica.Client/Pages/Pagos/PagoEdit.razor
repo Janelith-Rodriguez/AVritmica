@@ -1,0 +1,316 @@
+﻿@page "/pagos/editar/{id:int}"
+@page "/pagos/nuevo"
+@using AVritmica.Shared.DTO
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<h3>@Titulo</h3>
+
+<EditForm Model="pagoDTO" OnValidSubmit="GuardarPago">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="carritoId" class="form-label">Carrito *</label>
+                <InputSelect id="carritoId" class="form-select" @bind-Value="pagoDTO.CarritoId" @onchange="OnCarritoChange">
+                    <option value="0">Seleccione un carrito</option>
+                    @foreach (var carrito in carritos)
+                    {
+                        <option value="@carrito.Id">#@carrito.Id - @carrito.Usuario?.Nombre (Total: @carrito.MontoTotal.ToString("C"))</option>
+                    }
+                </InputSelect>
+                @if (pagoDTO.CarritoId == 0)
+                {
+                    <div class="text-danger">Debe seleccionar un carrito</div>
+                }
+            </div>
+
+            <div class="mb-3">
+                <label for="metodoPago" class="form-label">Método de Pago *</label>
+                <InputSelect id="metodoPago" class="form-select" @bind-Value="pagoDTO.MetodoPago">
+                    <option value="">Seleccione un método</option>
+                    <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
+                    <option value="Transferencia">Transferencia Bancaria</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="MercadoPago">MercadoPago</option>
+                </InputSelect>
+                @if (string.IsNullOrEmpty(pagoDTO.MetodoPago))
+                {
+                    <div class="text-danger">Debe seleccionar un método de pago</div>
+                }
+            </div>
+
+            <div class="mb-3">
+                <label for="montoPagado" class="form-label">Monto Pagado *</label>
+                <InputNumber id="montoPagado" class="form-control" @bind-Value="pagoDTO.MontoPagado" step="0.01" />
+                @if (pagoDTO.MontoPagado <= 0)
+                {
+                    <div class="text-danger">El monto debe ser mayor a 0</div>
+                }
+                @if (carritoSeleccionado != null)
+                {
+                    <small class="text-muted">
+                        Total carrito: @carritoSeleccionado.MontoTotal.ToString("C") |
+                        Saldo pendiente: @saldoPendiente.ToString("C")
+                    </small>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="estadoPago" class="form-label">Estado del Pago</label>
+                <InputSelect id="estadoPago" class="form-select" @bind-Value="pagoDTO.EstadoPago">
+                    <option value="Completado">Completado</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Fallido">Fallido</option>
+                    <option value="Reembolsado">Reembolsado</option>
+                </InputSelect>
+            </div>
+
+            <div class="mb-3">
+                <label for="saldo" class="form-label">Saldo</label>
+                <InputNumber id="saldo" class="form-control" @bind-Value="pagoDTO.Saldo" step="0.01" />
+            </div>
+
+            @if (carritoSeleccionado != null)
+            {
+                <div class="alert alert-info">
+                    <h6>Información del Carrito</h6>
+                    <p><strong>Usuario:</strong> @carritoSeleccionado.Usuario?.Nombre</p>
+                    <p><strong>Email:</strong> @carritoSeleccionado.Usuario?.Email</p>
+                    <p><strong>Productos:</strong> @carritoSeleccionado.CarritoProductos.Count</p>
+                    <p><strong>Estado:</strong> @carritoSeleccionado.Estado</p>
+                    <p><strong>Estado Pago:</strong> @carritoSeleccionado.EstadoPago</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <button type="submit" class="btn btn-primary" disabled="@guardando">@BotonGuardarTexto</button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+
+        @if (EsEdicion)
+        {
+            <button type="button" class="btn btn-warning" @onclick="CambiarEstado">Cambiar Estado</button>
+        }
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private PagoDTO pagoDTO = new();
+    private List<Carrito> carritos = new();
+    private Carrito? carritoSeleccionado = null;
+    private decimal saldoPendiente = 0;
+    private bool guardando = false;
+    private bool EsEdicion => Id > 0;
+
+    private string Titulo => EsEdicion ? "Editar Pago" : "Nuevo Pago";
+    private string BotonGuardarTexto => guardando ? "Guardando..." : "Guardar";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCarritos();
+
+        if (EsEdicion)
+        {
+            await CargarPago();
+        }
+        else
+        {
+            // Valores por defecto para nuevo pago
+            pagoDTO.EstadoPago = "Completado";
+            pagoDTO.FechaPago = DateTime.Now;
+        }
+    }
+
+    private async Task CargarCarritos()
+    {
+        try
+        {
+            carritos = await Http.GetFromJsonAsync<List<Carrito>>("api/Carritos") ?? new();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar carritos: {ex.Message}");
+        }
+    }
+
+    private async Task CargarPago()
+    {
+        try
+        {
+            var pago = await Http.GetFromJsonAsync<Pago>($"api/Pagos/{Id}");
+            if (pago != null)
+            {
+                pagoDTO = new PagoDTO
+                {
+                    Id = pago.Id,
+                    CarritoId = pago.CarritoId,
+                    FechaPago = pago.FechaPago,
+                    MetodoPago = pago.MetodoPago,
+                    MontoPagado = pago.MontoPagado,
+                    EstadoPago = pago.EstadoPago,
+                    Saldo = pago.Saldo
+                };
+                await CargarInformacionCarrito(pago.CarritoId);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar pago: {ex.Message}");
+        }
+    }
+
+    private async Task CargarInformacionCarrito(int carritoId)
+    {
+        try
+        {
+            carritoSeleccionado = await Http.GetFromJsonAsync<Carrito>($"api/Carritos/{carritoId}");
+            if (carritoSeleccionado != null)
+            {
+                var saldoResponse = await Http.GetAsync($"api/Pagos/saldo-pendiente-carrito/{carritoId}");
+                if (saldoResponse.IsSuccessStatusCode)
+                {
+                    saldoPendiente = await saldoResponse.Content.ReadFromJsonAsync<decimal>();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar información del carrito: {ex.Message}");
+        }
+        StateHasChanged();
+    }
+
+    private async Task OnCarritoChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int carritoId) && carritoId > 0)
+        {
+            await CargarInformacionCarrito(carritoId);
+        }
+        else
+        {
+            carritoSeleccionado = null;
+            saldoPendiente = 0;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GuardarPago()
+    {
+        // Validación del lado del cliente
+        if (pagoDTO.CarritoId == 0)
+        {
+            await JS.InvokeVoidAsync("alert", "Por favor seleccione un carrito");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(pagoDTO.MetodoPago))
+        {
+            await JS.InvokeVoidAsync("alert", "Por favor seleccione un método de pago");
+            return;
+        }
+
+        if (pagoDTO.MontoPagado <= 0)
+        {
+            await JS.InvokeVoidAsync("alert", "El monto pagado debe ser mayor a 0");
+            return;
+        }
+
+        guardando = true;
+        StateHasChanged();
+
+        try
+        {
+            HttpResponseMessage response;
+
+            if (EsEdicion)
+            {
+                // Usar clase anónima que coincida exactamente con PagoUpdateRequest
+                var updateRequest = new
+                {
+                    Id = Id,
+                    CarritoId = pagoDTO.CarritoId,
+                    MetodoPago = pagoDTO.MetodoPago,
+                    MontoPagado = pagoDTO.MontoPagado,
+                    EstadoPago = pagoDTO.EstadoPago,
+                    Saldo = pagoDTO.Saldo
+                };
+                response = await Http.PutAsJsonAsync($"api/Pagos/actualizar/{Id}", updateRequest);
+            }
+            else
+            {
+                // Usar clase anónima que coincida exactamente con PagoCreateRequest
+                var createRequest = new
+                {
+                    CarritoId = pagoDTO.CarritoId,
+                    MetodoPago = pagoDTO.MetodoPago,
+                    MontoPagado = pagoDTO.MontoPagado,
+                    EstadoPago = pagoDTO.EstadoPago,
+                    Saldo = pagoDTO.Saldo
+                };
+                response = await Http.PostAsJsonAsync("api/Pagos/crear", createRequest);
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("alert", EsEdicion ? "Pago actualizado correctamente" : "Pago creado correctamente");
+                Navigation.NavigateTo("/pagos");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                await JS.InvokeVoidAsync("alert", $"Error: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            guardando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CambiarEstado()
+    {
+        var nuevoEstado = await JS.InvokeAsync<string>("prompt", "Ingrese el nuevo estado:", pagoDTO.EstadoPago);
+
+        if (!string.IsNullOrEmpty(nuevoEstado))
+        {
+            try
+            {
+                var response = await Http.PostAsJsonAsync($"api/Pagos/actualizar-estado/{Id}", nuevoEstado);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "Estado del pago actualizado correctamente");
+                    await CargarPago();
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "Error al actualizar el estado del pago");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private void Cancelar()
+    {
+        Navigation.NavigateTo("/pagos");
+    }
+}

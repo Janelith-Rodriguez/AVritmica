@@ -1,14 +1,11 @@
 ﻿@page "/stock-movimientos"
-@using AVritmica.BD.Data.Entity
-@using AVritmica.Client.Servicios.Entidades
-@inject IStockMovimientoServicio stockMovimientoServicio
-@inject NavigationManager navigation
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<PageTitle>AVritmica - Movimientos de Stock</PageTitle>
 
 <h3>Movimientos de Stock</h3>
-
-<button class="btn btn-primary mb-3" @onclick="NuevoMovimiento">
-    <i class="bi bi-plus-circle"></i> Nuevo Movimiento
-</button>
 
 @if (cargando)
 {
@@ -18,110 +15,250 @@
         </div>
     </div>
 }
-else if (error)
-{
-    <div class="alert alert-danger">
-        <h5>Error al cargar los movimientos</h5>
-        <p>@mensajeError</p>
-        <button class="btn btn-warning" @onclick="Recargar">Reintentar</button>
-    </div>
-}
-else if (movimientos == null || !movimientos.Any())
-{
-    <div class="alert alert-info">
-        No hay movimientos de stock registrados.
-    </div>
-}
 else
 {
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Producto</th>
-                    <th>Tipo</th>
-                    <th>Cantidad</th>
-                    <th>Descripción</th>
-                    <th>Fecha</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var movimiento in movimientos)
-                {
-                    <tr>
-                        <td>@movimiento.Id</td>
-                        <td>@(movimiento.Producto?.Nombre ?? "N/A")</td>
-                        <td>
-                            <span class="badge @GetTipoMovimientoBadgeClass(movimiento.TipoMovimiento)">
-                                @movimiento.TipoMovimiento
-                            </span>
-                        </td>
-                        <td class="@(movimiento.TipoMovimiento.ToLower().Contains("entrada") ? "text-success" : "text-danger")">
-                            @if (movimiento.TipoMovimiento.ToLower().Contains("entrada"))
-                            {
-                                <text>+</text>
-                            }
-                            else
-                            {
-                                <text>-</text>
-                            }
-                            @movimiento.Cantidad
-                        </td>
-                        <td class="text-truncate" style="max-width: 200px;" title="@movimiento.Descripcion">
-                            @movimiento.Descripcion
-                        </td>
-                        <td>@movimiento.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
-                        <td>
-                            <button class="btn btn-sm btn-info" @onclick="() => VerDetalles(movimiento.Id)" title="Detalles">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger" @onclick="() => EliminarMovimiento(movimiento)" title="Eliminar">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card bg-light">
+                <div class="card-body py-2">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-primary mb-0">@estadisticas.TotalMovimientos</h4>
+                                <small class="text-muted">Total Movimientos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-success mb-0">@estadisticas.TotalEntradas</h4>
+                                <small class="text-muted">Entradas</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-danger mb-0">@estadisticas.TotalSalidas</h4>
+                                <small class="text-muted">Salidas</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-info mb-0">@estadisticas.MovimientosHoy</h4>
+                                <small class="text-muted">Hoy</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-outline-primary" @onclick="ToggleFiltros">
+                <i class="fas fa-filter"></i> Filtros
+            </button>
+            <button class="btn btn-success" @onclick="NuevoMovimiento">
+                <i class="fas fa-plus"></i> Nuevo Movimiento
+            </button>
+        </div>
     </div>
+
+    @if (mostrarFiltros)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Filtros de Búsqueda</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Tipo Movimiento</label>
+                            <select class="form-select" @bind="filtroTipoMovimiento">
+                                <option value="">Todos</option>
+                                <option value="Entrada">Entrada</option>
+                                <option value="Salida">Salida</option>
+                                <option value="Compra">Compra</option>
+                                <option value="Venta">Venta</option>
+                                <option value="Ajuste Positivo">Ajuste Positivo</option>
+                                <option value="Ajuste Negativo">Ajuste Negativo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Producto</label>
+                            <select class="form-select" @bind="filtroProductoId">
+                                <option value="0">Todos los productos</option>
+                                @foreach (var producto in productos)
+                                {
+                                    <option value="@producto.Id">@producto.Nombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Fecha Desde</label>
+                            <input type="date" class="form-control" @bind="filtroFechaInicio" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Fecha Hasta</label>
+                            <input type="date" class="form-control" @bind="filtroFechaFin" />
+                        </div>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button class="btn btn-primary" @onclick="AplicarFiltros">
+                        <i class="fas fa-search"></i> Aplicar Filtros
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">
+                        <i class="fas fa-broom"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(mensajeInfo))
+    {
+        <div class="alert alert-info">
+            @mensajeInfo
+        </div>
+    }
+
+    @if (movimientosFiltrados?.Any() == true)
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Producto</th>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
+                        <th>Fecha</th>
+                        <th>Descripción</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var movimiento in movimientosFiltrados)
+                    {
+                        <tr class="@GetRowClass(movimiento.TipoMovimiento)">
+                            <td>@movimiento.Id</td>
+                            <td>
+                                <strong>@movimiento.Producto?.Nombre</strong>
+                                <br />
+                                <small class="text-muted">@movimiento.Producto?.Categoria?.Nombre</small>
+                            </td>
+                            <td>
+                                <span class="badge @GetBadgeClass(movimiento.TipoMovimiento)">
+                                    @movimiento.TipoMovimiento
+                                </span>
+                            </td>
+                            <td>
+                                <span class="@GetCantidadClass(movimiento.TipoMovimiento)">
+                                    @(movimiento.TipoMovimiento.Contains("Entrada") || movimiento.TipoMovimiento.Contains("Positivo") || movimiento.TipoMovimiento == "Compra" ? "+" : "-")@movimiento.Cantidad
+                                </span>
+                            </td>
+                            <td>
+                                <small>@movimiento.Fecha.ToString("dd/MM/yyyy HH:mm")</small>
+                            </td>
+                            <td>
+                                <div class="descripcion-truncado" title="@movimiento.Descripcion">
+                                    @(string.IsNullOrEmpty(movimiento.Descripcion) ? "Sin descripción" :
+                                                            movimiento.Descripcion.Length > 50 ? movimiento.Descripcion.Substring(0, 50) + "..." : movimiento.Descripcion)
+                    </div>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-info" @onclick="() => VerMovimiento(movimiento)" title="Ver detalles">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" @onclick="() => EditarMovimiento(movimiento)" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => EliminarMovimiento(movimiento)" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+                        }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                <span class="text-muted">
+                    Mostrando @movimientosFiltrados.Count de @movimientos.Count movimientos
+                </span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning text-center">
+            <i class="fas fa-boxes fa-3x mb-3 text-muted"></i>
+            <h4>No se encontraron movimientos</h4>
+            <p>@(movimientos.Any() ? "No hay movimientos que coincidan con los filtros aplicados." : "No hay movimientos de stock registrados en el sistema.")</p>
+            @if (!movimientos.Any())
+            {
+                <button class="btn btn-primary" @onclick="NuevoMovimiento">
+                    <i class="fas fa-plus"></i> Registrar Primer Movimiento
+                </button>
+            }
+        </div>
+    }
 }
 
 @code {
-    private List<StockMovimiento>? movimientos;
+    private List<StockMovimiento> movimientos = new();
+    private List<StockMovimiento> movimientosFiltrados = new();
+    private List<Producto> productos = new();
     private bool cargando = true;
-    private bool error = false;
-    private string mensajeError = "";
+    private bool mostrarFiltros = false;
+    private string mensajeInfo = "";
+
+    // Filtros
+    private string filtroTipoMovimiento = "";
+    private int filtroProductoId = 0;
+    private DateTime? filtroFechaInicio;
+    private DateTime? filtroFechaFin;
+
+    private EstadisticasMovimientos estadisticas = new();
 
     protected override async Task OnInitializedAsync()
     {
-        await CargarMovimientos();
+        await CargarDatos();
     }
 
-    private async Task CargarMovimientos()
+    private async Task CargarDatos()
     {
+        cargando = true;
+        StateHasChanged();
+
         try
         {
-            cargando = true;
-            error = false;
-            StateHasChanged();
+            // Cargar movimientos y productos en paralelo
+            var movimientosTask = Http.GetFromJsonAsync<List<StockMovimiento>>("api/StockMovimientos");
+            var productosTask = Http.GetFromJsonAsync<List<Producto>>("api/Productos");
 
-            var respuesta = await stockMovimientoServicio.Get();
-            if (!respuesta.Error)
-            {
-                movimientos = respuesta.Respuesta;
-            }
-            else
-            {
-                error = true;
-                mensajeError = await respuesta.ObtenerError();
-            }
+            await Task.WhenAll(movimientosTask, productosTask);
+
+            movimientos = movimientosTask.Result ?? new();
+            productos = productosTask.Result ?? new();
+
+            movimientosFiltrados = movimientos;
+            await CargarEstadisticas();
+
+            mensajeInfo = $"Se cargaron {movimientos.Count} movimientos de stock";
         }
         catch (Exception ex)
         {
-            error = true;
-            mensajeError = $"Error: {ex.Message}";
+            mensajeInfo = $"Error al cargar datos: {ex.Message}";
+            movimientos = new();
+            movimientosFiltrados = new();
+            productos = new();
         }
         finally
         {
@@ -130,37 +267,174 @@ else
         }
     }
 
-    private string GetTipoMovimientoBadgeClass(string tipo)
+    private async Task CargarEstadisticas()
     {
-        return tipo?.ToLower() switch
+        try
         {
-            "entrada" or "compra" or "ajuste positivo" => "bg-success",
-            "salida" or "venta" or "ajuste negativo" => "bg-danger",
-            _ => "bg-secondary"
-        };
+            var hoy = DateTime.Today;
+            var movimientosHoy = movimientos.Count(m => m.Fecha.Date == hoy);
+            var totalEntradas = movimientos.Count(m => m.TipoMovimiento.Contains("Entrada") || m.TipoMovimiento == "Compra" || m.TipoMovimiento == "Ajuste Positivo");
+            var totalSalidas = movimientos.Count(m => m.TipoMovimiento.Contains("Salida") || m.TipoMovimiento == "Venta" || m.TipoMovimiento == "Ajuste Negativo");
+
+            estadisticas = new EstadisticasMovimientos
+            {
+                TotalMovimientos = movimientos.Count,
+                TotalEntradas = totalEntradas,
+                TotalSalidas = totalSalidas,
+                MovimientosHoy = movimientosHoy
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cargando estadísticas: {ex.Message}");
+        }
     }
 
-    private void Recargar() => CargarMovimientos();
-    private void NuevoMovimiento() => navigation.NavigateTo("/stock-movimientos/nuevo");
-    private void VerDetalles(int id) => navigation.NavigateTo($"/stock-movimientos/detalles/{id}");
+    private void ToggleFiltros()
+    {
+        mostrarFiltros = !mostrarFiltros;
+    }
+
+    private void AplicarFiltros()
+    {
+        movimientosFiltrados = movimientos;
+
+        // Aplicar filtro por tipo de movimiento
+        if (!string.IsNullOrEmpty(filtroTipoMovimiento))
+        {
+            movimientosFiltrados = movimientosFiltrados
+                .Where(m => m.TipoMovimiento == filtroTipoMovimiento)
+                .ToList();
+        }
+
+        // Aplicar filtro por producto
+        if (filtroProductoId > 0)
+        {
+            movimientosFiltrados = movimientosFiltrados
+                .Where(m => m.ProductoId == filtroProductoId)
+                .ToList();
+        }
+
+        // Aplicar filtro por fechas
+        if (filtroFechaInicio.HasValue)
+        {
+            movimientosFiltrados = movimientosFiltrados
+                .Where(m => m.Fecha >= filtroFechaInicio.Value)
+                .ToList();
+        }
+
+        if (filtroFechaFin.HasValue)
+        {
+            movimientosFiltrados = movimientosFiltrados
+                .Where(m => m.Fecha <= filtroFechaFin.Value.AddDays(1).AddSeconds(-1))
+                .ToList();
+        }
+
+        mensajeInfo = $"Se encontraron {movimientosFiltrados.Count} movimientos con los filtros aplicados";
+        StateHasChanged();
+    }
+
+    private void LimpiarFiltros()
+    {
+        filtroTipoMovimiento = "";
+        filtroProductoId = 0;
+        filtroFechaInicio = null;
+        filtroFechaFin = null;
+        movimientosFiltrados = movimientos;
+        mensajeInfo = "Filtros limpiados";
+        StateHasChanged();
+    }
+
+    private void NuevoMovimiento()
+    {
+        Navigation.NavigateTo("/stock-movimientos/nuevo");
+    }
+
+    private void VerMovimiento(StockMovimiento movimiento)
+    {
+        Navigation.NavigateTo($"/stock-movimientos/detalles/{movimiento.Id}");
+    }
+
+    private void EditarMovimiento(StockMovimiento movimiento)
+    {
+        Navigation.NavigateTo($"/stock-movimientos/editar/{movimiento.Id}");
+    }
 
     private async Task EliminarMovimiento(StockMovimiento movimiento)
     {
-        if (await jsRuntime.InvokeAsync<bool>("confirm", $"¿Está seguro de eliminar este movimiento de stock?"))
+        var confirmado = await JS.InvokeAsync<bool>("confirm",
+            $"¿Está seguro de eliminar el movimiento de {movimiento.Producto?.Nombre}?");
+
+        if (confirmado)
         {
-            var respuesta = await stockMovimientoServicio.Delete(movimiento.Id);
-            if (!respuesta.Error)
+            try
             {
-                await CargarMovimientos();
-                await jsRuntime.InvokeVoidAsync("alert", "Movimiento eliminado correctamente");
+                var response = await Http.DeleteAsync($"api/StockMovimientos/{movimiento.Id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "Movimiento eliminado correctamente");
+                    await CargarDatos();
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "Error al eliminar el movimiento");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                var errorMsg = await respuesta.ObtenerError();
-                await jsRuntime.InvokeVoidAsync("alert", errorMsg);
+                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
             }
         }
     }
 
-    [Inject] private IJSRuntime jsRuntime { get; set; } = default!;
+    // Métodos auxiliares para estilos
+    private string GetBadgeClass(string tipoMovimiento)
+    {
+        return tipoMovimiento switch
+        {
+            "Entrada" or "Compra" or "Ajuste Positivo" => "bg-success",
+            "Salida" or "Venta" or "Ajuste Negativo" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetRowClass(string tipoMovimiento)
+    {
+        return tipoMovimiento switch
+        {
+            "Entrada" or "Compra" or "Ajuste Positivo" => "table-success",
+            "Salida" or "Venta" or "Ajuste Negativo" => "table-danger",
+            _ => ""
+        };
+    }
+
+    private string GetCantidadClass(string tipoMovimiento)
+    {
+        return tipoMovimiento switch
+        {
+            "Entrada" or "Compra" or "Ajuste Positivo" => "text-success fw-bold",
+            "Salida" or "Venta" or "Ajuste Negativo" => "text-danger fw-bold",
+            _ => "text-muted"
+        };
+    }
+
+    // Clases auxiliares
+    public class EstadisticasMovimientos
+    {
+        public int TotalMovimientos { get; set; }
+        public int TotalEntradas { get; set; }
+        public int TotalSalidas { get; set; }
+        public int MovimientosHoy { get; set; }
+    }
 }
+
+<style>
+    .descripcion-truncado {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: help;
+    }
+</style>
