@@ -1,108 +1,180 @@
 ﻿@page "/"
 @inject NavigationManager Navigation
 
-<PageTitle>AV.ritmica - Tienda Online de Gimnasia</PageTitle>
+<PageTitle>AVritmica - Sistema de Gestión Comercial</PageTitle>
 
 <div class="hero-container">
     <div class="hero-content">
         <div class="logo-container">
-            <i class="fas fa-dumbbell logo-icon"></i>
-            <h1 class="title">Bienvenidos a <span>AV.ritmica</span></h1>
+            <i class="fas fa-calculator logo-icon"></i>
+            <h1 class="title">Bienvenido a <span>AVritmica</span></h1>
         </div>
 
         <p class="subtitle">
-            Tu destino exclusivo para productos de gimnasia rítmica, fitness y bienestar
+            Sistema integral de gestión para tu negocio - Control de inventario, ventas, compras y reportes
         </p>
 
         <div class="features-grid">
             <div class="feature-item">
-                <i class="fas fa-shipping-fast"></i>
-                <span>Envíos Rápidos</span>
+                <i class="fas fa-boxes"></i>
+                <span>Gestión de Stock</span>
             </div>
             <div class="feature-item">
-                <i class="fas fa-award"></i>
-                <span>Calidad Premium</span>
+                <i class="fas fa-chart-line"></i>
+                <span>Reportes Avanzados</span>
             </div>
             <div class="feature-item">
-                <i class="fas fa-headset"></i>
-                <span>Soporte 24/7</span>
+                <i class="fas fa-shopping-cart"></i>
+                <span>Control de Ventas</span>
             </div>
         </div>
 
         <div class="cta-buttons">
-            <button class="btn-primary" @onclick="IrATienda">
-                <i class="fas fa-shopping-bag"></i>
-                Explorar Productos
+            <button class="btn-primary" @onclick="IrAProductos">
+                <i class="fas fa-box-open"></i>
+                Gestión de Productos
             </button>
-            <button class="btn-secondary" @onclick="IrACategorias">
-                <i class="fas fa-tags"></i>
-                Ver Categorías
+            <button class="btn-secondary" @onclick="IrAVentas">
+                <i class="fas fa-cash-register"></i>
+                Módulo de Ventas
+            </button>
+            <button class="btn-tertiary" @onclick="IrAReportes">
+                <i class="fas fa-chart-bar"></i>
+                Ver Reportes
             </button>
         </div>
 
         <div class="quick-stats">
             <div class="stat">
-                <span class="stat-number">+500</span>
+                <span class="stat-number">@estadisticas.TotalProductos</span>
                 <span class="stat-label">Productos</span>
             </div>
             <div class="stat">
-                <span class="stat-number">+1K</span>
-                <span class="stat-label">Clientes</span>
+                <span class="stat-number">@estadisticas.TotalVentas.ToString("C")</span>
+                <span class="stat-label">Ventas Totales</span>
             </div>
             <div class="stat">
-                <span class="stat-number">99%</span>
-                <span class="stat-label">Satisfacción</span>
+                <span class="stat-number">@estadisticas.StockBajo</span>
+                <span class="stat-label">Stock Bajo</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">@estadisticas.CarritosActivos</span>
+                <span class="stat-label">Carritos Activos</span>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Sección de características -->
-<div class="features-section">
+<!-- Dashboard de Módulos -->
+<div class="modules-section">
     <div class="container">
-        <h2 class="section-title">¿Por qué elegir AV.ritmica?</h2>
-        <div class="features-grid-main">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-tshirt"></i>
+        <h2 class="section-title">Módulos del Sistema</h2>
+        <div class="modules-grid">
+            <div class="module-card" @onclick="IrAProductos">
+                <div class="module-icon">
+                    <i class="fas fa-boxes"></i>
                 </div>
-                <h3>Ropa Deportiva</h3>
-                <p>Vestimenta especializada para gimnasia rítmica y entrenamiento</p>
+                <h3>Gestión de Productos</h3>
+                <p>Administra productos, categorías y controla el inventario en tiempo real</p>
+                <div class="module-stats">
+                    <span class="stat-badge">@estadisticas.TotalProductos productos</span>
+                    <span class="stat-badge badge-warning">@estadisticas.StockBajo bajo stock</span>
+                </div>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-dumbbell"></i>
+
+            <div class="module-card" @onclick="IrACategorias">
+                <div class="module-icon">
+                    <i class="fas fa-tags"></i>
                 </div>
-                <h3>Equipamiento</h3>
-                <p>Accesorios y equipos profesionales para tu práctica deportiva</p>
+                <h3>Categorías</h3>
+                <p>Organiza tus productos por categorías para un mejor control y búsqueda</p>
+                <div class="module-stats">
+                    <span class="stat-badge">@estadisticas.TotalCategorias categorías</span>
+                </div>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-gem"></i>
+
+            <div class="module-card" @onclick="IrAStockMovimientos">
+                <div class="module-icon">
+                    <i class="fas fa-arrow-left-right"></i>
                 </div>
-                <h3>Calidad Premium</h3>
-                <p>Productos seleccionados con los más altos estándares de calidad</p>
+                <h3>Movimientos de Stock</h3>
+                <p>Registra entradas, salidas y ajustes de inventario con trazabilidad completa</p>
+                <div class="module-stats">
+                    <span class="stat-badge">Movimientos diarios</span>
+                </div>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-rocket"></i>
+
+            <div class="module-card" @onclick="IrACarritos">
+                <div class="module-icon">
+                    <i class="fas fa-shopping-cart"></i>
                 </div>
-                <h3>Envío Express</h3>
-                <p>Recibe tus productos en tiempo récord con nuestro servicio premium</p>
+                <h3>Gestión de Ventas</h3>
+                <p>Controla carritos de compra, pedidos y proceso completo de ventas</p>
+                <div class="module-stats">
+                    <span class="stat-badge">@estadisticas.CarritosActivos activos</span>
+                    <span class="stat-badge badge-success">@estadisticas.VentasHoy hoy</span>
+                </div>
+            </div>
+
+            <div class="module-card" @onclick="IrACompras">
+                <div class="module-icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <h3>Compras y Proveedores</h3>
+                <p>Gestiona compras, proveedores y entradas de mercadería al sistema</p>
+                <div class="module-stats">
+                    <span class="stat-badge">Compras mensuales</span>
+                </div>
+            </div>
+
+            <div class="module-card" @onclick="IrAReportes">
+                <div class="module-icon">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <h3>Reportes y Analytics</h3>
+                <p>Reportes detallados de ventas, stock, compras y análisis de negocio</p>
+                <div class="module-stats">
+                    <span class="stat-badge badge-info">4 tipos de reportes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Rápidas -->
+<div class="quick-actions-section">
+    <div class="container">
+        <h2 class="section-title">Acciones Rápidas</h2>
+        <div class="actions-grid">
+            <div class="action-card" @onclick="NuevoProducto">
+                <i class="fas fa-plus-circle"></i>
+                <span>Nuevo Producto</span>
+            </div>
+            <div class="action-card" @onclick="NuevoMovimientoStock">
+                <i class="fas fa-box"></i>
+                <span>Registrar Movimiento</span>
+            </div>
+            <div class="action-card" @onclick="NuevoCarrito">
+                <i class="fas fa-cart-plus"></i>
+                <span>Nueva Venta</span>
+            </div>
+            <div class="action-card" @onclick="IrAReportes">
+                <i class="fas fa-chart-line"></i>
+                <span>Ver Reportes</span>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    /* Contenedor principal */
+    /* Contenedor principal con gradiente personalizado */
     .hero-container {
         min-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
         text-align: center;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(180deg, #450050 0%, #e753fe 100%);
         position: relative;
         overflow: hidden;
     }
@@ -112,26 +184,23 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: url("images/hero-av-ritmica.jpg") no-repeat center center;
-            background-size: cover;
-            opacity: 0.3;
-            z-index: 1;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(231, 83, 254, 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(69, 0, 80, 0.2) 0%, transparent 50%);
+            pointer-events: none;
         }
 
-    /* Contenido principal */
     .hero-content {
         position: relative;
         z-index: 2;
         color: #fff;
         padding: 3rem;
-        max-width: 800px;
-        backdrop-filter: blur(15px);
-        background: rgba(255,255,255,0.1);
+        max-width: 1000px;
+        backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.1);
         border-radius: 25px;
-        border: 1px solid rgba(255,255,255,0.2);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 20px 40px rgba(69, 0, 80, 0.4);
         animation: fadeInUp 1s ease-out;
     }
 
@@ -142,24 +211,26 @@
 
     .logo-icon {
         font-size: 3rem;
-        color: #ff4081;
+        color: #ffffff;
         margin-bottom: 1rem;
-        animation: bounce 2s infinite;
+        animation: pulse 2s infinite;
+        text-shadow: 0 0 20px rgba(231, 83, 254, 0.5);
     }
 
     .title {
         font-size: 3.5rem;
         font-weight: 800;
         margin-bottom: 1rem;
-        text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+        text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
         line-height: 1.2;
     }
 
         .title span {
-            background: linear-gradient(45deg, #ff4081, #ff80ab);
+            background: linear-gradient(45deg, #ffffff, #e753fe);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            text-shadow: none;
         }
 
     /* Subtítulo */
@@ -167,7 +238,7 @@
         font-size: 1.4rem;
         margin-bottom: 2.5rem;
         opacity: 0.9;
-        text-shadow: 1px 1px 5px rgba(0,0,0,0.3);
+        text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
     }
 
     /* Grid de características pequeñas */
@@ -183,22 +254,24 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        background: rgba(255,255,255,0.1);
+        background: rgba(255, 255, 255, 0.15);
         padding: 0.8rem 1.2rem;
         border-radius: 50px;
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
         transition: all 0.3s ease;
     }
 
         .feature-item:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.25);
             transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(231, 83, 254, 0.3);
         }
 
         .feature-item i {
-            color: #ff4081;
+            color: #ffffff;
             font-size: 1.1rem;
+            text-shadow: 0 0 10px rgba(231, 83, 254, 0.5);
         }
 
     /* Botones CTA */
@@ -210,7 +283,7 @@
         flex-wrap: wrap;
     }
 
-    .btn-primary, .btn-secondary {
+    .btn-primary, .btn-secondary, .btn-tertiary {
         padding: 15px 30px;
         font-size: 1.1rem;
         border: none;
@@ -222,62 +295,91 @@
         gap: 0.8rem;
         font-weight: 600;
         text-decoration: none;
+        backdrop-filter: blur(10px);
     }
 
     .btn-primary {
-        background: linear-gradient(45deg, #ff4081, #ff80ab);
+        background: linear-gradient(45deg, #e753fe, #ff80ff);
         color: white;
-        box-shadow: 0 8px 25px rgba(255,64,129,0.4);
+        box-shadow: 0 8px 25px rgba(231, 83, 254, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
         .btn-primary:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(255,64,129,0.6);
-            background: linear-gradient(45deg, #ff80ab, #ff4081);
+            box-shadow: 0 12px 30px rgba(231, 83, 254, 0.6);
+            background: linear-gradient(45deg, #ff80ff, #e753fe);
         }
 
     .btn-secondary {
-        background: rgba(255,255,255,0.2);
+        background: linear-gradient(45deg, #450050, #7a2d8a);
         color: white;
-        border: 2px solid rgba(255,255,255,0.3);
-        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 25px rgba(69, 0, 80, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
         .btn-secondary:hover {
-            background: rgba(255,255,255,0.3);
             transform: translateY(-3px);
-            border-color: rgba(255,255,255,0.5);
+            box-shadow: 0 12px 30px rgba(69, 0, 80, 0.6);
+            background: linear-gradient(45deg, #7a2d8a, #450050);
+        }
+
+    .btn-tertiary {
+        background: linear-gradient(45deg, #ff80ff, #ffffff);
+        color: #450050;
+        box-shadow: 0 8px 25px rgba(255, 128, 255, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+        .btn-tertiary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255, 128, 255, 0.6);
+            background: linear-gradient(45deg, #ffffff, #ff80ff);
         }
 
     /* Estadísticas rápidas */
     .quick-stats {
-        display: flex;
-        justify-content: center;
-        gap: 3rem;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 2rem;
+        max-width: 600px;
+        margin: 0 auto;
     }
 
     .stat {
         text-align: center;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 1.5rem 1rem;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
     }
+
+        .stat:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-5px);
+        }
 
     .stat-number {
         display: block;
         font-size: 2rem;
-        font-weight: 800;
-        color: #ff4081;
-        text-shadow: 1px 1px 5px rgba(0,0,0,0.3);
+        font-weight: 700;
+        color: #ffffff;
+        text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
     }
 
     .stat-label {
         font-size: 0.9rem;
-        opacity: 0.8;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+        color: #ffffff;
     }
 
-    /* Sección de características */
-    .features-section {
+    /* Sección de Módulos */
+    .modules-section {
         padding: 5rem 2rem;
-        background: #f8f9fa;
+        background: linear-gradient(180deg, #f8f4ff 0%, #ffffff 100%);
     }
 
     .container {
@@ -290,54 +392,152 @@
         font-size: 2.5rem;
         font-weight: 700;
         margin-bottom: 3rem;
-        color: #333;
+        background: linear-gradient(45deg, #450050, #e753fe);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
-    .features-grid-main {
+    .modules-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
         gap: 2rem;
     }
 
-    .feature-card {
+    .module-card {
         background: white;
         padding: 2.5rem 2rem;
         border-radius: 20px;
         text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 30px rgba(69, 0, 80, 0.1);
         transition: all 0.3s ease;
-        border: 1px solid #e9ecef;
+        border: 1px solid #f0e6ff;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
     }
 
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        .module-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #450050, #e753fe);
         }
 
-    .feature-icon {
+        .module-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(69, 0, 80, 0.15);
+        }
+
+    .module-icon {
         width: 80px;
         height: 80px;
         margin: 0 auto 1.5rem;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #450050, #e753fe);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 2rem;
         color: white;
+        box-shadow: 0 8px 20px rgba(231, 83, 254, 0.3);
     }
 
-    .feature-card h3 {
+    .module-card h3 {
         font-size: 1.4rem;
         font-weight: 600;
         margin-bottom: 1rem;
-        color: #333;
+        color: #450050;
     }
 
-    .feature-card p {
+    .module-card p {
         color: #666;
         line-height: 1.6;
+        margin-bottom: 1.5rem;
     }
+
+    .module-stats {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .stat-badge {
+        background: #f0e6ff;
+        color: #450050;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        border: 1px solid #e753fe;
+    }
+
+    .badge-warning {
+        background: #ffe6f2;
+        color: #e753fe;
+        border-color: #e753fe;
+    }
+
+    .badge-success {
+        background: #e6fff2;
+        color: #00cc88;
+        border-color: #00cc88;
+    }
+
+    .badge-info {
+        background: #e6f7ff;
+        color: #0099ff;
+        border-color: #0099ff;
+    }
+
+    /* Acciones Rápidas */
+    .quick-actions-section {
+        padding: 4rem 2rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8f4ff 100%);
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .action-card {
+        background: linear-gradient(135deg, #450050, #e753fe);
+        color: white;
+        padding: 2rem 1rem;
+        border-radius: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 8px 25px rgba(231, 83, 254, 0.3);
+    }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(231, 83, 254, 0.4);
+            background: linear-gradient(135deg, #e753fe, #450050);
+        }
+
+        .action-card i {
+            font-size: 2rem;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        .action-card span {
+            font-weight: 600;
+            font-size: 1rem;
+        }
 
     /* Animaciones */
     @@keyframes fadeInUp {
@@ -352,17 +552,13 @@
         }
     }
 
-    @@keyframes bounce {
-        0%, 20%, 50%, 80%, 100% {
-            transform: translateY(0);
+    @@keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
         }
 
-        40% {
-            transform: translateY(-10px);
-        }
-
-        60% {
-            transform: translateY(-5px);
+        50% {
+            transform: scale(1.1);
         }
     }
 
@@ -386,7 +582,7 @@
             align-items: center;
         }
 
-        .btn-primary, .btn-secondary {
+        .btn-primary, .btn-secondary, .btn-tertiary {
             width: 100%;
             max-width: 300px;
             justify-content: center;
@@ -397,13 +593,44 @@
         }
 
         .quick-stats {
-            gap: 2rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .modules-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .actions-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 </style>
 
 @code {
-    private void IrATienda()
+    private EstadisticasHome estadisticas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarEstadisticas();
+    }
+
+    private async Task CargarEstadisticas()
+    {
+        // Aquí cargarías datos reales de tu API
+        // Por ahora usamos datos de ejemplo
+        estadisticas = new EstadisticasHome
+        {
+            TotalProductos = 45,
+            TotalVentas = 15250.75m,
+            StockBajo = 3,
+            CarritosActivos = 5,
+            TotalCategorias = 8,
+            VentasHoy = 3
+        };
+    }
+
+    private void IrAProductos()
     {
         Navigation.NavigateTo("/productos");
     }
@@ -411,5 +638,56 @@
     private void IrACategorias()
     {
         Navigation.NavigateTo("/categorias");
+    }
+
+    private void IrAStockMovimientos()
+    {
+        Navigation.NavigateTo("/stock-movimientos");
+    }
+
+    private void IrACarritos()
+    {
+        Navigation.NavigateTo("/carritos");
+    }
+
+    private void IrACompras()
+    {
+        Navigation.NavigateTo("/compras");
+    }
+
+    private void IrAReportes()
+    {
+        Navigation.NavigateTo("/reportes");
+    }
+
+    private void IrAVentas()
+    {
+        Navigation.NavigateTo("/carritos");
+    }
+
+    private void NuevoProducto()
+    {
+        Navigation.NavigateTo("/productos/nuevo");
+    }
+
+    private void NuevoMovimientoStock()
+    {
+        Navigation.NavigateTo("/stock-movimientos/nuevo");
+    }
+
+    private void NuevoCarrito()
+    {
+        Navigation.NavigateTo("/carritos/nuevo");
+    }
+
+    // Clase para estadísticas
+    public class EstadisticasHome
+    {
+        public int TotalProductos { get; set; }
+        public decimal TotalVentas { get; set; }
+        public int StockBajo { get; set; }
+        public int CarritosActivos { get; set; }
+        public int TotalCategorias { get; set; }
+        public int VentasHoy { get; set; }
     }
 }

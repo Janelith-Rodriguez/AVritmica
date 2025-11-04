@@ -16,18 +16,13 @@ namespace AVritmica.Server.Controllers
             this.repositorio = repositorio;
         }
 
-        [HttpGet]    // api/StockMovimientos
+        [HttpGet]
         public async Task<ActionResult<List<StockMovimiento>>> Get()
         {
             return await repositorio.Select();
         }
 
-        /// <summary>
-        /// Endpoint para obtener un movimiento de stock por ID
-        /// </summary>
-        /// <param name="id">Id del movimiento</param>
-        /// <returns></returns>
-        [HttpGet("{id:int}")] // api/StockMovimientos/2
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<StockMovimiento>> Get(int id)
         {
             StockMovimiento? movimiento = await repositorio.SelectById(id);
@@ -38,24 +33,23 @@ namespace AVritmica.Server.Controllers
             return movimiento;
         }
 
-        [HttpGet("GetByProducto/{productoId:int}")] // api/StockMovimientos/GetByProducto/1
+        [HttpGet("GetByProducto/{productoId:int}")]
         public async Task<ActionResult<List<StockMovimiento>>> GetByProducto(int productoId)
         {
             var movimientos = await repositorio.SelectByProducto(productoId);
             return movimientos;
         }
 
-        [HttpGet("GetByTipoMovimiento/{tipoMovimiento}")] // api/StockMovimientos/GetByTipoMovimiento/Entrada
+        [HttpGet("GetByTipoMovimiento/{tipoMovimiento}")]
         public async Task<ActionResult<List<StockMovimiento>>> GetByTipoMovimiento(string tipoMovimiento)
         {
             var movimientos = await repositorio.SelectByTipoMovimiento(tipoMovimiento);
             return movimientos;
         }
 
-        [HttpGet("GetByRangoFechas")] // api/StockMovimientos/GetByRangoFechas?fechaInicio=2024-01-01&fechaFin=2024-01-31
+        [HttpGet("GetByRangoFechas")]
         public async Task<ActionResult<List<StockMovimiento>>> GetByRangoFechas([FromQuery] DateTime fechaInicio, [FromQuery] DateTime fechaFin)
         {
-            // Validar que la fecha de inicio no sea mayor que la fecha fin
             if (fechaInicio > fechaFin)
             {
                 return BadRequest("La fecha de inicio no puede ser mayor que la fecha fin");
@@ -65,10 +59,9 @@ namespace AVritmica.Server.Controllers
             return movimientos;
         }
 
-        [HttpGet("GetByProductoAndRangoFechas")] // api/StockMovimientos/GetByProductoAndRangoFechas?productoId=1&fechaInicio=2024-01-01&fechaFin=2024-01-31
+        [HttpGet("GetByProductoAndRangoFechas")]
         public async Task<ActionResult<List<StockMovimiento>>> GetByProductoAndRangoFechas([FromQuery] int productoId, [FromQuery] DateTime fechaInicio, [FromQuery] DateTime fechaFin)
         {
-            // Validar que la fecha de inicio no sea mayor que la fecha fin
             if (fechaInicio > fechaFin)
             {
                 return BadRequest("La fecha de inicio no puede ser mayor que la fecha fin");
@@ -78,45 +71,65 @@ namespace AVritmica.Server.Controllers
             return movimientos;
         }
 
-        [HttpGet("existe/{id:int}")] // api/StockMovimientos/existe/2
+        [HttpGet("GetByCarrito/{carritoId:int}")]
+        public async Task<ActionResult<List<StockMovimiento>>> GetByCarrito(int carritoId)
+        {
+            var movimientos = await repositorio.SelectByCarrito(carritoId);
+            return movimientos;
+        }
+
+        [HttpGet("GetByProveedor/{proveedor}")]
+        public async Task<ActionResult<List<StockMovimiento>>> GetByProveedor(string proveedor)
+        {
+            var movimientos = await repositorio.SelectByProveedor(proveedor);
+            return movimientos;
+        }
+
+        // NUEVO ENDPOINT: Obtener movimientos por compra
+        [HttpGet("GetByCompra/{compraId:int}")]
+        public async Task<ActionResult<List<StockMovimiento>>> GetByCompra(int compraId)
+        {
+            var movimientos = await repositorio.SelectByCompra(compraId);
+            return movimientos;
+        }
+
+        [HttpGet("existe/{id:int}")]
         public async Task<ActionResult<bool>> Existe(int id)
         {
             return await repositorio.Existe(id);
         }
 
-        [HttpGet("stock-actual/{productoId:int}")] // api/StockMovimientos/stock-actual/1
+        [HttpGet("stock-actual/{productoId:int}")]
         public async Task<ActionResult<int>> ObtenerStockActual(int productoId)
         {
             var stock = await repositorio.ObtenerStockActual(productoId);
             return stock;
         }
 
-        [HttpGet("entradas-totales/{productoId:int}")] // api/StockMovimientos/entradas-totales/1
+        [HttpGet("entradas-totales/{productoId:int}")]
         public async Task<ActionResult<int>> ObtenerEntradasTotales(int productoId)
         {
             var entradas = await repositorio.ObtenerEntradasTotales(productoId);
             return entradas;
         }
 
-        [HttpGet("salidas-totales/{productoId:int}")] // api/StockMovimientos/salidas-totales/1
+        [HttpGet("salidas-totales/{productoId:int}")]
         public async Task<ActionResult<int>> ObtenerSalidasTotales(int productoId)
         {
             var salidas = await repositorio.ObtenerSalidasTotales(productoId);
             return salidas;
         }
 
-        [HttpPost("registrar-movimiento")] // api/StockMovimientos/registrar-movimiento
+        [HttpPost("registrar-movimiento")]
         public async Task<ActionResult<bool>> RegistrarMovimiento([FromBody] RegistrarMovimientoRequest request)
         {
             try
             {
-                // Validar que la cantidad sea diferente de cero
                 if (request.Cantidad == 0)
                 {
                     return BadRequest("La cantidad no puede ser cero");
                 }
 
-                // Validar tipos de movimiento
                 var tiposValidos = new[] { "Entrada", "Salida", "Compra", "Venta", "Ajuste Positivo", "Ajuste Negativo" };
                 if (!tiposValidos.Contains(request.TipoMovimiento))
                 {
@@ -143,12 +156,106 @@ namespace AVritmica.Server.Controllers
             }
         }
 
-        [HttpPost("entrada-stock")] // api/StockMovimientos/entrada-stock
+        [HttpPost("registrar-movimiento-carrito")]
+        public async Task<ActionResult<bool>> RegistrarMovimientoConCarrito([FromBody] RegistrarMovimientoCarritoRequest request)
+        {
+            try
+            {
+                if (request.Cantidad == 0)
+                {
+                    return BadRequest("La cantidad no puede ser cero");
+                }
+
+                var resultado = await repositorio.RegistrarMovimientoConCarrito(
+                    request.ProductoId,
+                    request.CarritoId,
+                    request.TipoMovimiento,
+                    request.Cantidad,
+                    request.Descripcion
+                );
+
+                if (!resultado)
+                {
+                    return BadRequest("No se pudo registrar el movimiento de stock");
+                }
+
+                return Ok(true);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpPost("registrar-movimiento-proveedor")]
+        public async Task<ActionResult<bool>> RegistrarMovimientoConProveedor([FromBody] RegistrarMovimientoProveedorRequest request)
+        {
+            try
+            {
+                if (request.Cantidad == 0)
+                {
+                    return BadRequest("La cantidad no puede ser cero");
+                }
+
+                var resultado = await repositorio.RegistrarMovimientoConProveedor(
+                    request.ProductoId,
+                    request.Proveedor,
+                    request.TipoMovimiento,
+                    request.Cantidad,
+                    request.NumeroFactura,
+                    request.Descripcion
+                );
+
+                if (!resultado)
+                {
+                    return BadRequest("No se pudo registrar el movimiento de stock");
+                }
+
+                return Ok(true);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        // NUEVO ENDPOINT: Registrar movimiento con compra
+        [HttpPost("registrar-movimiento-compra")]
+        public async Task<ActionResult<bool>> RegistrarMovimientoConCompra([FromBody] RegistrarMovimientoCompraRequest request)
+        {
+            try
+            {
+                if (request.Cantidad == 0)
+                {
+                    return BadRequest("La cantidad no puede ser cero");
+                }
+
+                var resultado = await repositorio.RegistrarMovimientoConCompra(
+                    request.ProductoId,
+                    request.CompraId,
+                    request.TipoMovimiento,
+                    request.Cantidad,
+                    request.Descripcion
+                );
+
+                if (!resultado)
+                {
+                    return BadRequest("No se pudo registrar el movimiento de stock");
+                }
+
+                return Ok(true);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpPost("entrada-stock")]
         public async Task<ActionResult<bool>> RegistrarEntradaStock([FromBody] RegistrarEntradaRequest request)
         {
             try
             {
-                // Validar que la cantidad sea positiva
                 if (request.Cantidad <= 0)
                 {
                     return BadRequest("La cantidad debe ser mayor a cero para una entrada de stock");
@@ -174,18 +281,16 @@ namespace AVritmica.Server.Controllers
             }
         }
 
-        [HttpPost("salida-stock")] // api/StockMovimientos/salida-stock
+        [HttpPost("salida-stock")]
         public async Task<ActionResult<bool>> RegistrarSalidaStock([FromBody] RegistrarSalidaRequest request)
         {
             try
             {
-                // Validar que la cantidad sea positiva
                 if (request.Cantidad <= 0)
                 {
                     return BadRequest("La cantidad debe ser mayor a cero para una salida de stock");
                 }
 
-                // Verificar stock disponible
                 var stockActual = await repositorio.ObtenerStockActual(request.ProductoId);
                 if (stockActual < request.Cantidad)
                 {
@@ -217,13 +322,11 @@ namespace AVritmica.Server.Controllers
         {
             try
             {
-                // Validar que la cantidad sea diferente de cero
                 if (entidad.Cantidad == 0)
                 {
                     return BadRequest("La cantidad no puede ser cero");
                 }
 
-                // Validar tipos de movimiento
                 var tiposValidos = new[] { "Entrada", "Salida", "Compra", "Venta", "Ajuste Positivo", "Ajuste Negativo" };
                 if (!tiposValidos.Contains(entidad.TipoMovimiento))
                 {
@@ -238,7 +341,7 @@ namespace AVritmica.Server.Controllers
             }
         }
 
-        [HttpPut("{id:int}")] // api/StockMovimientos/2
+        [HttpPut("{id:int}")]
         public async Task<ActionResult> Put(int id, [FromBody] StockMovimiento entidad)
         {
             try
@@ -248,13 +351,11 @@ namespace AVritmica.Server.Controllers
                     return BadRequest("Datos Incorrectos");
                 }
 
-                // Validar que la cantidad sea diferente de cero
                 if (entidad.Cantidad == 0)
                 {
                     return BadRequest("La cantidad no puede ser cero");
                 }
 
-                // Validar tipos de movimiento
                 var tiposValidos = new[] { "Entrada", "Salida", "Compra", "Venta", "Ajuste Positivo", "Ajuste Negativo" };
                 if (!tiposValidos.Contains(entidad.TipoMovimiento))
                 {
@@ -276,7 +377,7 @@ namespace AVritmica.Server.Controllers
             }
         }
 
-        [HttpDelete("{id:int}")] // api/StockMovimientos/2
+        [HttpDelete("{id:int}")]
         public async Task<ActionResult> Delete(int id)
         {
             var resp = await repositorio.Delete(id);
@@ -288,10 +389,60 @@ namespace AVritmica.Server.Controllers
         }
     }
 
-    // Clases auxiliares para requests
+    // CLASES AUXILIARES PARA REQUESTS
     public class RegistrarMovimientoRequest
     {
         public int ProductoId { get; set; }
+
+        [Required]
+        [MaxLength(50)]
+        public string TipoMovimiento { get; set; } = string.Empty;
+
+        [Required]
+        public int Cantidad { get; set; }
+
+        public string Descripcion { get; set; } = string.Empty;
+    }
+
+    public class RegistrarMovimientoCarritoRequest
+    {
+        public int ProductoId { get; set; }
+        public int CarritoId { get; set; }
+
+        [Required]
+        [MaxLength(50)]
+        public string TipoMovimiento { get; set; } = string.Empty;
+
+        [Required]
+        public int Cantidad { get; set; }
+
+        public string Descripcion { get; set; } = string.Empty;
+    }
+
+    public class RegistrarMovimientoProveedorRequest
+    {
+        public int ProductoId { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        public string Proveedor { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(50)]
+        public string TipoMovimiento { get; set; } = string.Empty;
+
+        [Required]
+        public int Cantidad { get; set; }
+
+        public string NumeroFactura { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+    }
+
+    // NUEVA CLASE: Request para movimiento con compra
+    public class RegistrarMovimientoCompraRequest
+    {
+        public int ProductoId { get; set; }
+        public int CompraId { get; set; }
 
         [Required]
         [MaxLength(50)]

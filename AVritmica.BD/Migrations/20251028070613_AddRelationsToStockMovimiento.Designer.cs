@@ -4,6 +4,7 @@ using AVritmica.BD.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AVritmica.BD.Migrations
 {
     [DbContext(typeof(Context))]
-    partial class ContextModelSnapshot : ModelSnapshot
+    [Migration("20251028070613_AddRelationsToStockMovimiento")]
+    partial class AddRelationsToStockMovimiento
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -345,9 +348,6 @@ namespace AVritmica.BD.Migrations
                     b.Property<int?>("CarritoId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CompraId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -390,8 +390,6 @@ namespace AVritmica.BD.Migrations
                     b.HasIndex("ProductoId1");
 
                     b.HasIndex(new[] { "CarritoId" }, "IX_StockMovimientos_CarritoId");
-
-                    b.HasIndex(new[] { "CompraId" }, "IX_StockMovimientos_CompraId");
 
                     b.HasIndex(new[] { "ProductoId" }, "IX_StockMovimientos_ProductoId");
 
@@ -540,10 +538,6 @@ namespace AVritmica.BD.Migrations
                         .HasForeignKey("CarritoId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("AVritmica.BD.Data.Entity.Compra", "Compra")
-                        .WithMany()
-                        .HasForeignKey("CompraId");
-
                     b.HasOne("AVritmica.BD.Data.Entity.Producto", "Producto")
                         .WithMany()
                         .HasForeignKey("ProductoId")
@@ -555,8 +549,6 @@ namespace AVritmica.BD.Migrations
                         .HasForeignKey("ProductoId1");
 
                     b.Navigation("Carrito");
-
-                    b.Navigation("Compra");
 
                     b.Navigation("Producto");
                 });

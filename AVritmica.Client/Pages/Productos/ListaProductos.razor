@@ -26,7 +26,12 @@ else
         <button class="btn btn-primary" @onclick="NuevoProducto">
             <i class="fas fa-plus"></i> Nuevo Producto
         </button>
-        
+
+        <!-- BOTÓN DE REFRESH AGREGADO -->
+        <button class="btn btn-outline-secondary ml-2" @onclick="RefrescarProductos" title="Refrescar lista">
+            <i class="fas fa-sync-alt"></i> Refrescar
+        </button>
+
         <div class="row mt-2">
             <div class="col-md-4">
                 <label>Filtrar por categoría:</label>
@@ -76,39 +81,43 @@ else
                                         <i class="fas fa-image"></i> Con imagen
                                     </small>
                                 }
-                            </td>
-                            <td>@(string.IsNullOrEmpty(producto.Descripcion) ? "Sin descripción" : 
-                                producto.Descripcion.Length > 50 ? producto.Descripcion.Substring(0, 50) + "..." : producto.Descripcion)</td>
-                            <td class="text-success">
-                                <strong>@producto.Precio.ToString("C")</strong>
-                            </td>
-                            <td>
-                                <span class="@(producto.Stock > 0 ? "badge badge-success" : "badge badge-danger")">
-                                    @producto.Stock
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge badge-info">@(producto.Categoria?.Nombre ?? "N/A")</span>
-                            </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <button class="btn btn-sm btn-info" @onclick="() => EditarProducto(producto.Id)" title="Editar">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-warning" @onclick="() => AjustarStock(producto)" title="Ajustar Stock">
-                                        <i class="fas fa-boxes"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" @onclick="() => EliminarProducto(producto)" title="Eliminar">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
+                        </td>
+                        <td>
+                            @(string.IsNullOrEmpty(producto.Descripcion) ? "Sin descripción" :
+                                                producto.Descripcion.Length > 50 ? producto.Descripcion.Substring(0, 50) + "..." : producto.Descripcion)
+                </td>
+                <td class="text-success">
+                    <strong>@producto.Precio.ToString("C")</strong>
+                </td>
+                <td>
+                    <!-- Stock con badge-light -->
+                    <span class="@(producto.Stock > 0 ? "badge badge-light text-dark" : "badge badge-danger")">
+                        @producto.Stock
+                    </span>
+                </td>
+                <td>
+                    <!-- Categoría con badge-light -->
+                    <span class="badge badge-light text-dark">@(producto.Categoria?.Nombre ?? "N/A")</span>
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-info" @onclick="() => EditarProducto(producto.Id)" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" @onclick="() => AjustarStock(producto)" title="Ajustar Stock">
+                            <i class="fas fa-boxes"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => EliminarProducto(producto)" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+                        }
                 </tbody>
             </table>
         </div>
-        
+
         <div class="mt-2">
             <small class="text-muted">
                 Mostrando @ProductosFiltrados.Count de @productos.Count producto(s)
@@ -130,13 +139,13 @@ else
     private int filtroCategoriaId = 0;
 
     // Propiedad computada para los productos filtrados
-    private List<Producto> ProductosFiltrados 
+    private List<Producto> ProductosFiltrados
     {
         get
         {
             if (filtroCategoriaId == 0)
                 return productos;
-            
+
             return productos.Where(p => p.CategoriaId == filtroCategoriaId).ToList();
         }
     }
@@ -189,12 +198,12 @@ else
         try
         {
             var respuesta = await ProductoService.GetProductos();
-            
+
             if (respuesta.Error)
             {
                 var errorDetalle = await respuesta.ObtenerError();
                 mensajeError = $"Error al cargar productos: {errorDetalle}";
-                
+
                 // Si no hay detalles, mostrar mensaje genérico
                 if (string.IsNullOrEmpty(errorDetalle) || errorDetalle == "Error interno del servidor")
                 {
@@ -211,6 +220,16 @@ else
         {
             mensajeError = $"Excepción al cargar productos: {ex.Message}";
         }
+    }
+
+    // NUEVO MÉTODO: Refrescar productos
+    private async Task RefrescarProductos()
+    {
+        await CargarProductos();
+        StateHasChanged();
+
+        // Mostrar mensaje de confirmación
+        await JS.InvokeVoidAsync("alert", "✅ Lista de productos actualizada");
     }
 
     private async Task ReintentarCarga()
@@ -230,9 +249,9 @@ else
 
     private async Task AjustarStock(Producto producto)
     {
-        var cantidad = await JS.InvokeAsync<string>("prompt", 
+        var cantidad = await JS.InvokeAsync<string>("prompt",
             $"Ajustar stock para: {producto.Nombre}\n\nStock actual: {producto.Stock}\n\nIngrese la cantidad a sumar (ej: 10) o restar (ej: -5):");
-        
+
         if (!string.IsNullOrEmpty(cantidad) && int.TryParse(cantidad, out int cant))
         {
             var respuesta = await ProductoService.ActualizarStock(producto.Id, cant);
@@ -240,21 +259,28 @@ else
             {
                 // Recargar productos después de actualizar stock
                 await CargarProductos();
-                await JS.InvokeVoidAsync("alert", $"✅ Stock actualizado exitosamente");
+                // CAMBIO: Mensaje mejorado
+                await JS.InvokeVoidAsync("alert", $"✅ Stock actualizado exitosamente\n\nProducto: {producto.Nombre}\nStock anterior: {producto.Stock}\nStock actual: {producto.Stock + cant}");
             }
             else
             {
                 var error = await respuesta.ObtenerError();
-                await JS.InvokeVoidAsync("alert", $"❌ Error: {error}");
+                // CAMBIO: Mensaje de error más descriptivo
+                await JS.InvokeVoidAsync("alert", $"❌ No se pudo actualizar el stock\n\nMotivo: {error}\n\nPor favor, verifique los datos e intente nuevamente.");
             }
+        }
+        else if (!string.IsNullOrEmpty(cantidad))
+        {
+            // CAMBIO: Mensaje para valor inválido
+            await JS.InvokeVoidAsync("alert", "❌ Valor inválido\n\nPor favor, ingrese un número válido (ej: 10, -5, 25)");
         }
     }
 
     private async Task EliminarProducto(Producto producto)
     {
-        var confirmado = await JS.InvokeAsync<bool>("confirm", 
+        var confirmado = await JS.InvokeAsync<bool>("confirm",
             $"¿Está seguro de eliminar el producto?\n\n\"{producto.Nombre}\"\n\nEsta acción no se puede deshacer.");
-        
+
         if (confirmado)
         {
             var respuesta = await ProductoService.DeleteProducto(producto.Id);
@@ -271,5 +297,4 @@ else
             }
         }
     }
-
 }

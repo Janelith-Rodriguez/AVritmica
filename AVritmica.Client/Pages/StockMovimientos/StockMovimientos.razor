@@ -107,6 +107,20 @@ else
                         </div>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="form-label">Relación Específica</label>
+                            <select class="form-select" @bind="filtroRelacion">
+                                <option value="">Todas las relaciones</option>
+                                <option value="ConCarrito">Con Carrito (Ventas)</option>
+                                <option value="ConCompra">Con Compra (Compras)</option>
+                                <option value="ConProveedor">Con Proveedor</option>
+                                <option value="SinRelacion">Sin Relación Específica</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 <div class="text-end">
                     <button class="btn btn-primary" @onclick="AplicarFiltros">
                         <i class="fas fa-search"></i> Aplicar Filtros
@@ -138,7 +152,7 @@ else
                         <th>Cantidad</th>
                         <th>Fecha</th>
                         <th>Descripción</th>
-                        <th>Acciones</th>
+                        <th>Detalles Relacionados</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -166,23 +180,125 @@ else
                             </td>
                             <td>
                                 <div class="descripcion-truncado" title="@movimiento.Descripcion">
-                                    @(string.IsNullOrEmpty(movimiento.Descripcion) ? "Sin descripción" :
-                                                            movimiento.Descripcion.Length > 50 ? movimiento.Descripcion.Substring(0, 50) + "..." : movimiento.Descripcion)
-                    </div>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-info" @onclick="() => VerMovimiento(movimiento)" title="Ver detalles">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-warning" @onclick="() => EditarMovimiento(movimiento)" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" @onclick="() => EliminarMovimiento(movimiento)" title="Eliminar">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-                        }
+                                    @(string.IsNullOrEmpty(movimiento.Descripcion) ? "Sin descripción" : movimiento.Descripcion.Length > 50 ? movimiento.Descripcion.Substring(0, 50) + "..." : movimiento.Descripcion)
+                                </div>
+                            </td>
+                            <td>
+                                <!-- DETALLES ESPECÍFICOS CON LAS NUEVAS RELACIONES -->
+                                @if (movimiento.TipoMovimiento.Contains("Salida") || movimiento.TipoMovimiento == "Venta" || movimiento.TipoMovimiento == "Ajuste Negativo")
+                                {
+                                    <div class="detalles-movimiento">
+                                        @if (movimiento.CarritoId.HasValue && movimiento.CarritoId > 0)
+                                        {
+                                            <div class="text-center">
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-shopping-cart"></i> Venta - Carrito #@movimiento.CarritoId
+                                                </span>
+                                                <br />
+                                                <small class="text-muted">
+                                                    Cliente: @movimiento.Carrito?.Usuario?.Nombre @movimiento.Carrito?.Usuario?.Apellido
+                                                </small>
+                                                <br />
+                                                <small class="text-muted">
+                                                    Estado: @movimiento.Carrito?.Estado
+                                                </small>
+                                                <br />
+                                                <small class="text-muted">
+                                                    Productos: @movimiento.Carrito?.CarritoProductos?.Count
+                                                </small>
+                                                <br />
+                                                <button class="btn btn-sm btn-outline-primary mt-1"
+                                                        @onclick="() => VerCarrito(movimiento.CarritoId.Value)"
+                                                        title="Ver detalles del carrito">
+                                                    <i class="fas fa-external-link-alt"></i> Ver Carrito
+                                                </button>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">
+                                                <i class="fas fa-box"></i> Salida de inventario
+                                            </small>
+                                            <br />
+                                            <small>@movimiento.Descripcion</small>
+                                        }
+                                    </div>
+                                }
+                                else if (movimiento.TipoMovimiento.Contains("Entrada") || movimiento.TipoMovimiento == "Compra" || movimiento.TipoMovimiento == "Ajuste Positivo")
+                                {
+                                    <div class="detalles-movimiento">
+                                        @if (movimiento.CompraId.HasValue && movimiento.CompraId > 0)
+                                        {
+                                            <div class="text-center">
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-shopping-bag"></i> Compra #@movimiento.CompraId
+                                                </span>
+                                                <br />
+                                                <small class="text-muted">
+                                                    Fecha: @movimiento.Compra?.FechaCompra.ToString("dd/MM/yyyy")
+                                                </small>
+                                                <br />
+                                                <small class="text-muted">
+                                                    Productos: @movimiento.Compra?.CompraDetalles?.Count
+                                                </small>
+                                                <br />
+                                                <button class="btn btn-sm btn-outline-success mt-1"
+                                                        @onclick="() => VerCompra(movimiento.CompraId.Value)"
+                                                        title="Ver detalles de la compra">
+                                                    <i class="fas fa-external-link-alt"></i> Ver Compra
+                                                </button>
+                                            </div>
+                                        }
+                                        else if (!string.IsNullOrEmpty(movimiento.Proveedor))
+                                        {
+                                            <div class="text-center">
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-truck"></i> @movimiento.Proveedor
+                                                </span>
+                                                @if (!string.IsNullOrEmpty(movimiento.NumeroFactura))
+                                                {
+                                                    <br />
+                                                    <small class="text-muted">
+                                                        Factura: @movimiento.NumeroFactura
+                                                    </small>
+                                                }
+                                                @if (!string.IsNullOrEmpty(movimiento.NumeroOrdenCompra))
+                                                {
+                                                    <br />
+                                                    <small class="text-muted">
+                                                        OC: @movimiento.NumeroOrdenCompra
+                                                    </small>
+                                                }
+                                                @if (movimiento.FechaDocumento.HasValue)
+                                                {
+                                                    <br />
+                                                    <small class="text-muted">
+                                                        Fecha: @movimiento.FechaDocumento.Value.ToString("dd/MM/yyyy")
+                                                    </small>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">
+                                                <i class="fas fa-arrow-down"></i> Entrada de inventario
+                                            </small>
+                                            <br />
+                                            <small>@movimiento.Descripcion</small>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <small class="text-muted">
+                                        <i class="fas fa-cog"></i> Movimiento del sistema
+                                    </small>
+                                    <br />
+                                    <small>@movimiento.Descripcion</small>
+                                }
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
@@ -192,6 +308,11 @@ else
                 <span class="text-muted">
                     Mostrando @movimientosFiltrados.Count de @movimientos.Count movimientos
                 </span>
+            </div>
+            <div>
+                <small class="text-muted">
+                    @estadisticas.TotalEntradas entradas • @estadisticas.TotalSalidas salidas
+                </small>
             </div>
         </div>
     }
@@ -224,6 +345,7 @@ else
     private int filtroProductoId = 0;
     private DateTime? filtroFechaInicio;
     private DateTime? filtroFechaFin;
+    private string filtroRelacion = "";
 
     private EstadisticasMovimientos estadisticas = new();
 
@@ -239,7 +361,6 @@ else
 
         try
         {
-            // Cargar movimientos y productos en paralelo
             var movimientosTask = Http.GetFromJsonAsync<List<StockMovimiento>>("api/StockMovimientos");
             var productosTask = Http.GetFromJsonAsync<List<Producto>>("api/Productos");
 
@@ -290,6 +411,16 @@ else
         }
     }
 
+    private void VerCarrito(int carritoId)
+    {
+        Navigation.NavigateTo($"/carritos/detalles/{carritoId}");
+    }
+
+    private void VerCompra(int compraId)
+    {
+        Navigation.NavigateTo($"/compras/detalles/{compraId}");
+    }
+
     private void ToggleFiltros()
     {
         mostrarFiltros = !mostrarFiltros;
@@ -299,7 +430,7 @@ else
     {
         movimientosFiltrados = movimientos;
 
-        // Aplicar filtro por tipo de movimiento
+        // Filtro por tipo de movimiento
         if (!string.IsNullOrEmpty(filtroTipoMovimiento))
         {
             movimientosFiltrados = movimientosFiltrados
@@ -307,7 +438,7 @@ else
                 .ToList();
         }
 
-        // Aplicar filtro por producto
+        // Filtro por producto
         if (filtroProductoId > 0)
         {
             movimientosFiltrados = movimientosFiltrados
@@ -315,7 +446,7 @@ else
                 .ToList();
         }
 
-        // Aplicar filtro por fechas
+        // Filtro por fecha
         if (filtroFechaInicio.HasValue)
         {
             movimientosFiltrados = movimientosFiltrados
@@ -330,6 +461,20 @@ else
                 .ToList();
         }
 
+        // Filtro por relación específica
+        if (!string.IsNullOrEmpty(filtroRelacion))
+        {
+            movimientosFiltrados = filtroRelacion switch
+            {
+                "ConCarrito" => movimientosFiltrados.Where(m => m.CarritoId.HasValue).ToList(),
+                "ConCompra" => movimientosFiltrados.Where(m => m.CompraId.HasValue).ToList(),
+                "ConProveedor" => movimientosFiltrados.Where(m => !string.IsNullOrEmpty(m.Proveedor)).ToList(),
+                "SinRelacion" => movimientosFiltrados.Where(m =>
+                    !m.CarritoId.HasValue && !m.CompraId.HasValue && string.IsNullOrEmpty(m.Proveedor)).ToList(),
+                _ => movimientosFiltrados
+            };
+        }
+
         mensajeInfo = $"Se encontraron {movimientosFiltrados.Count} movimientos con los filtros aplicados";
         StateHasChanged();
     }
@@ -340,6 +485,7 @@ else
         filtroProductoId = 0;
         filtroFechaInicio = null;
         filtroFechaFin = null;
+        filtroRelacion = "";
         movimientosFiltrados = movimientos;
         mensajeInfo = "Filtros limpiados";
         StateHasChanged();
@@ -348,44 +494,6 @@ else
     private void NuevoMovimiento()
     {
         Navigation.NavigateTo("/stock-movimientos/nuevo");
-    }
-
-    private void VerMovimiento(StockMovimiento movimiento)
-    {
-        Navigation.NavigateTo($"/stock-movimientos/detalles/{movimiento.Id}");
-    }
-
-    private void EditarMovimiento(StockMovimiento movimiento)
-    {
-        Navigation.NavigateTo($"/stock-movimientos/editar/{movimiento.Id}");
-    }
-
-    private async Task EliminarMovimiento(StockMovimiento movimiento)
-    {
-        var confirmado = await JS.InvokeAsync<bool>("confirm",
-            $"¿Está seguro de eliminar el movimiento de {movimiento.Producto?.Nombre}?");
-
-        if (confirmado)
-        {
-            try
-            {
-                var response = await Http.DeleteAsync($"api/StockMovimientos/{movimiento.Id}");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    await JS.InvokeVoidAsync("alert", "Movimiento eliminado correctamente");
-                    await CargarDatos();
-                }
-                else
-                {
-                    await JS.InvokeVoidAsync("alert", "Error al eliminar el movimiento");
-                }
-            }
-            catch (Exception ex)
-            {
-                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
-            }
-        }
     }
 
     // Métodos auxiliares para estilos
@@ -436,5 +544,14 @@ else
         text-overflow: ellipsis;
         white-space: nowrap;
         cursor: help;
+    }
+
+    .detalles-movimiento {
+        max-width: 180px;
+        text-align: center;
+    }
+
+    .badge {
+        font-size: 0.75em;
     }
 </style>

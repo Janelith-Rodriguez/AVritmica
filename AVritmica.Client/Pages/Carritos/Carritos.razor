@@ -16,23 +16,28 @@
 else
 {
     <div class="mb-3">
-        <button class="btn btn-primary" @onclick="NuevoCarrito">Nuevo Carrito</button>
-        <button class="btn btn-outline-secondary" @onclick="Refrescar">Refrescar</button>
+        <button class="btn btn-primary" @onclick="NuevoCarrito">
+            <i class="fas fa-plus"></i> Nuevo Carrito
+        </button>
+        <button class="btn btn-outline-secondary" @onclick="Refrescar">
+            <i class="fas fa-sync-alt"></i> Refrescar
+        </button>
     </div>
 
     <div class="row mb-3">
-        <div class="col-md-4">
-            <input type="text" class="form-control" placeholder="Buscar..." @bind="terminoBusqueda" @oninput="OnBuscar" />
+        <div class="col-md-3">
+            <input type="text" class="form-control" placeholder="Buscar por usuario..." @bind="terminoBusqueda" @oninput="OnBuscar" />
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <select class="form-select" @bind="filtroEstado">
                 <option value="">Todos los estados</option>
                 <option value="Activo">Activo</option>
                 <option value="Confirmado">Confirmado</option>
+                <option value="Completado">Completado</option>
                 <option value="Cancelado">Cancelado</option>
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <select class="form-select" @bind="filtroEstadoPago">
                 <option value="">Todos los estados de pago</option>
                 <option value="Pendiente">Pendiente</option>
@@ -40,6 +45,9 @@ else
                 <option value="Parcial">Parcial</option>
                 <option value="Cancelado">Cancelado</option>
             </select>
+        </div>
+        <div class="col-md-3">
+            <small class="text-muted">Mostrando @carritosFiltrados.Count de @carritos.Count carritos</small>
         </div>
     </div>
 
@@ -52,6 +60,7 @@ else
                         <th>ID</th>
                         <th>Usuario</th>
                         <th>Fecha Creación</th>
+                        <th>Productos</th>
                         <th>Estado</th>
                         <th>Estado Pago</th>
                         <th>Monto Total</th>
@@ -64,26 +73,55 @@ else
                     {
                         <tr>
                             <td>@carrito.Id</td>
-                            <td>@carrito.Usuario?.Nombre</td>
+                            <td>
+                                <strong>@carrito.Usuario?.Nombre @carrito.Usuario?.Apellido</strong>
+                                <br />
+                                <small class="text-muted">@carrito.Usuario?.Email</small>
+                            </td>
                             <td>@carrito.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>
-                                <span class="badge @GetEstadoBadgeClass(carrito.Estado)">@carrito.Estado</span>
+                                <!-- NUEVO: Información de productos -->
+                                @if (carrito.CarritoProductos?.Any() == true)
+                                {
+                                    <div>
+                                        <span class="badge bg-primary">@carrito.CarritoProductos.Count producto(s)</span>
+                                        <br />
+                                        <small class="text-muted">
+                                            @string.Join(", ", carrito.CarritoProductos.Take(2).Select(cp => $"{cp.Producto?.Nombre} ({cp.Cantidad})"))
+                                            @if (carrito.CarritoProductos.Count > 2)
+                                            {
+                                                <text>y @(carrito.CarritoProductos.Count - 2) más...</text>
+                                            }
+                                        </small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Sin productos</span>
+                                }
                             </td>
                             <td>
-                                <span class="badge @GetEstadoPagoBadgeClass(carrito.EstadoPago)">@carrito.EstadoPago</span>
+                                <span class="badge @GetEstadoBadgeClass(carrito.Estado)" title="@GetEstadoTooltip(carrito.Estado)">@carrito.Estado</span>
                             </td>
-                            <td>@carrito.MontoTotal.ToString("C")</td>
-                            <td>@carrito.Saldo.ToString("C")</td>
                             <td>
-                                <button class="btn btn-sm btn-info" @onclick="() => VerDetalles(carrito.Id)" title="Ver detalles">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-warning" @onclick="() => EditarCarrito(carrito.Id)" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" @onclick="() => EliminarCarrito(carrito)" title="Eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <span class="badge @GetEstadoPagoBadgeClass(carrito.EstadoPago)" title="@GetEstadoPagoTooltip(carrito.EstadoPago)">@carrito.EstadoPago</span>
+                            </td>
+                            <td><strong>@carrito.MontoTotal.ToString("C")</strong></td>
+                            <td class="@(carrito.Saldo > 0 ? "text-warning" : "text-success")">
+                                <strong>@carrito.Saldo.ToString("C")</strong>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-info" @onclick="() => VerDetalles(carrito.Id)" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-warning" @onclick="() => EditarCarrito(carrito.Id)" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-danger" @onclick="() => EliminarCarrito(carrito)" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -94,7 +132,7 @@ else
     else
     {
         <div class="alert alert-info">
-            No se encontraron carritos.
+            <i class="fas fa-info-circle"></i> No se encontraron carritos.
         </div>
     }
 }
@@ -119,7 +157,8 @@ else
 
         try
         {
-            carritos = await Http.GetFromJsonAsync<List<Carrito>>("api/Carritos") ?? new();
+            // Incluir productos y usuarios en la carga
+            carritos = await Http.GetFromJsonAsync<List<Carrito>>("api/Carritos?incluirProductos=true&incluirUsuario=true") ?? new();
             FiltrarCarritos();
         }
         catch (Exception ex)
@@ -141,6 +180,8 @@ else
         {
             carritosFiltrados = carritosFiltrados.Where(c =>
                 c.Usuario?.Nombre?.Contains(terminoBusqueda, StringComparison.OrdinalIgnoreCase) == true ||
+                c.Usuario?.Apellido?.Contains(terminoBusqueda, StringComparison.OrdinalIgnoreCase) == true ||
+                c.Usuario?.Email?.Contains(terminoBusqueda, StringComparison.OrdinalIgnoreCase) == true ||
                 c.DireccionEnvio?.Contains(terminoBusqueda, StringComparison.OrdinalIgnoreCase) == true
             ).ToList();
         }
@@ -168,6 +209,7 @@ else
         {
             "Activo" => "bg-primary",
             "Confirmado" => "bg-success",
+            "Completado" => "bg-info",
             "Cancelado" => "bg-danger",
             _ => "bg-secondary"
         };
@@ -177,11 +219,36 @@ else
     {
         return estadoPago switch
         {
-            "Pendiente" => "bg-warning",
+            "Pendiente" => "bg-warning text-dark",
             "Pagado" => "bg-success",
             "Parcial" => "bg-info",
             "Cancelado" => "bg-danger",
             _ => "bg-secondary"
+        };
+    }
+
+    // NUEVOS MÉTODOS PARA TOOLTIPS
+    private string GetEstadoTooltip(string estado)
+    {
+        return estado switch
+        {
+            "Activo" => "Carrito en proceso - El usuario está agregando productos",
+            "Confirmado" => "Pedido confirmado - Esperando pago y envío",
+            "Completado" => "Pedido completado - Entregrado y finalizado",
+            "Cancelado" => "Carrito cancelado - No se procesará",
+            _ => "Estado desconocido"
+        };
+    }
+
+    private string GetEstadoPagoTooltip(string estadoPago)
+    {
+        return estadoPago switch
+        {
+            "Pendiente" => "No se ha realizado ningún pago",
+            "Pagado" => "El monto total está completamente pagado",
+            "Parcial" => "Se realizó un pago parcial",
+            "Cancelado" => "Los pagos fueron cancelados/revertidos",
+            _ => "Estado de pago desconocido"
         };
     }
 
@@ -202,7 +269,8 @@ else
 
     private async Task EliminarCarrito(Carrito carrito)
     {
-        bool confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Está seguro de eliminar el carrito #{carrito.Id}?");
+        bool confirmado = await JS.InvokeAsync<bool>("confirm",
+            $"¿Está seguro de eliminar el carrito #{carrito.Id}?\n\nUsuario: {carrito.Usuario?.Nombre}\nProductos: {carrito.CarritoProductos?.Count ?? 0}\n\nEsta acción no se puede deshacer.");
 
         if (confirmado)
         {
@@ -212,17 +280,17 @@ else
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JS.InvokeVoidAsync("alert", "Carrito eliminado correctamente");
+                    await JS.InvokeVoidAsync("alert", "✅ Carrito eliminado correctamente");
                     await CargarCarritos();
                 }
                 else
                 {
-                    await JS.InvokeVoidAsync("alert", "Error al eliminar el carrito");
+                    await JS.InvokeVoidAsync("alert", "❌ Error al eliminar el carrito");
                 }
             }
             catch (Exception ex)
             {
-                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
             }
         }
     }
@@ -230,5 +298,6 @@ else
     private async Task Refrescar()
     {
         await CargarCarritos();
+        await JS.InvokeVoidAsync("alert", "✅ Lista de carritos actualizada");
     }
 }

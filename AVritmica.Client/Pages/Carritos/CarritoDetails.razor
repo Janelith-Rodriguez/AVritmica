@@ -16,44 +16,81 @@
 else if (carrito == null)
 {
     <div class="alert alert-danger">
-        Carrito no encontrado
+        <i class="fas fa-exclamation-triangle"></i> Carrito no encontrado
     </div>
 }
 else
 {
     <div class="card">
-        <div class="card-header">
+        <div class="card-header bg-light">
             <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Carrito #@carrito.Id</h5>
+                <h5 class="mb-0">
+                    <i class="fas fa-shopping-cart"></i> Carrito #@carrito.Id
+                    <small class="text-muted"> - @carrito.Usuario?.Nombre @carrito.Usuario?.Apellido</small>
+                </h5>
                 <div>
-                    <span class="badge @GetEstadoBadgeClass(carrito.Estado) me-2">@carrito.Estado</span>
-                    <span class="badge @GetEstadoPagoBadgeClass(carrito.EstadoPago)">@carrito.EstadoPago</span>
+                    <span class="badge @GetEstadoBadgeClass(carrito.Estado) me-2" title="@GetEstadoTooltip(carrito.Estado)">@carrito.Estado</span>
+                    <span class="badge @GetEstadoPagoBadgeClass(carrito.EstadoPago)" title="@GetEstadoPagoTooltip(carrito.EstadoPago)">@carrito.EstadoPago</span>
                 </div>
             </div>
         </div>
+
         <div class="card-body">
-            <div class="row">
+            <!-- Información básica -->
+            <div class="row mb-4">
                 <div class="col-md-6">
-                    <p><strong>Usuario:</strong> @carrito.Usuario?.Nombre</p>
-                    <p><strong>Fecha Creación:</strong> @carrito.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</p>
-                    <p><strong>Fecha Confirmación:</strong> @(carrito.FechaConfirmacion?.ToString("dd/MM/yyyy HH:mm") ?? "No confirmado")</p>
+                    <h6><i class="fas fa-user"></i> Información del Usuario</h6>
+                    <p><strong>Nombre:</strong> @carrito.Usuario?.Nombre @carrito.Usuario?.Apellido</p>
+                    <p><strong>Email:</strong> @carrito.Usuario?.Email</p>
+                    <p><strong>Teléfono:</strong> @carrito.Usuario?.Telefono</p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Monto Total:</strong> @carrito.MontoTotal.ToString("C")</p>
-                    <p><strong>Saldo:</strong> @carrito.Saldo.ToString("C")</p>
-                    <p><strong>Dirección Envío:</strong> @carrito.DireccionEnvio</p>
+                    <h6><i class="fas fa-receipt"></i> Información del Pedido</h6>
+                    <p><strong>Fecha Creación:</strong> @carrito.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p><strong>Fecha Confirmación:</strong> @(carrito.FechaConfirmacion?.ToString("dd/MM/yyyy HH:mm") ?? "No confirmado")</p>
+                    <p><strong>Dirección Envío:</strong> @(string.IsNullOrEmpty(carrito.DireccionEnvio) ? "No especificada" : carrito.DireccionEnvio)</p>
                 </div>
             </div>
 
-            <div class="mt-4">
-                <h6>Productos en el Carrito</h6>
+            <!-- Resumen financiero -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h6>Monto Total</h6>
+                            <h4>@carrito.MontoTotal.ToString("C")</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card @(carrito.Saldo > 0 ? "bg-warning" : "bg-success") text-white">
+                        <div class="card-body text-center">
+                            <h6>Saldo Pendiente</h6>
+                            <h4>@carrito.Saldo.ToString("C")</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h6>Productos</h6>
+                            <h4>@(carrito.CarritoProductos?.Count ?? 0)</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos del carrito -->
+            <div class="mb-4">
+                <h5><i class="fas fa-boxes"></i> Productos en el Carrito</h5>
                 @if (carrito.CarritoProductos?.Any() == true)
                 {
                     <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
+                        <table class="table table-striped">
+                            <thead class="table-dark">
                                 <tr>
                                     <th>Producto</th>
+                                    <th>Categoría</th>
                                     <th>Cantidad</th>
                                     <th>Precio Unitario</th>
                                     <th>Subtotal</th>
@@ -63,24 +100,47 @@ else
                                 @foreach (var item in carrito.CarritoProductos)
                                 {
                                     <tr>
-                                        <td>@item.Producto?.Nombre</td>
-                                        <td>@item.Cantidad</td>
+                                        <td>
+                                            <strong>@item.Producto?.Nombre</strong>
+                                            @if (!string.IsNullOrEmpty(item.Producto?.ImagenUrl))
+                                            {
+                                                <br />
+                                                <small class="text-muted">
+                                                    <i class="fas fa-image"></i> Con imagen
+                                                </small>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">@item.Producto?.Categoria?.Nombre</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge @(item.Cantidad > 0 ? "bg-primary" : "bg-danger")">@item.Cantidad</span>
+                                        </td>
                                         <td>@item.PrecioUnitario.ToString("C")</td>
-                                        <td>@((item.Cantidad * item.PrecioUnitario).ToString("C"))</td>
+                                        <td><strong>@((item.Cantidad * item.PrecioUnitario).ToString("C"))</strong></td>
                                     </tr>
                                 }
                             </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                                    <td><strong>@carrito.MontoTotal.ToString("C")</strong></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 }
                 else
                 {
-                    <p class="text-muted">No hay productos en el carrito</p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> No hay productos en el carrito
+                    </div>
                 }
             </div>
 
-            <div class="mt-4">
-                <h6>Pagos</h6>
+            <!-- Historial de pagos - VERSIÓN SEGURA -->
+            <div class="mb-4">
+                <h5><i class="fas fa-credit-card"></i> Historial de Pagos</h5>
                 @if (carrito.Pagos?.Any() == true)
                 {
                     <div class="table-responsive">
@@ -98,7 +158,7 @@ else
                                 @foreach (var pago in carrito.Pagos)
                                 {
                                     <tr>
-                                        <td>@pago.Id</td>
+                                        <td>#@pago.Id</td>
                                         <td>@pago.MontoPagado.ToString("C")</td>
                                         <td>@pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</td>
                                         <td>@pago.MetodoPago</td>
@@ -110,16 +170,38 @@ else
                             </tbody>
                         </table>
                     </div>
+
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <strong>Total Pagado:</strong> @carrito.Pagos.Sum(p => p.MontoPagado).ToString("C")
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Saldo Restante:</strong>
+                            <span class="@(carrito.Saldo > 0 ? "text-warning" : "text-success")">
+                                @carrito.Saldo.ToString("C")
+                            </span>
+                        </div>
+                    </div>
                 }
                 else
                 {
-                    <p class="text-muted">No hay pagos registrados</p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No hay pagos registrados para este carrito
+                    </div>
                 }
             </div>
         </div>
+
         <div class="card-footer">
-            <button class="btn btn-secondary" @onclick="Volver">Volver</button>
-            <button class="btn btn-primary" @onclick="Editar">Editar</button>
+            <button class="btn btn-secondary" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+            <button class="btn btn-primary" @onclick="Editar">
+                <i class="fas fa-edit"></i> Editar Carrito
+            </button>
+            <button class="btn btn-outline-info" @onclick="ImprimirDetalles">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
         </div>
     </div>
 }
@@ -139,7 +221,8 @@ else
     {
         try
         {
-            carrito = await Http.GetFromJsonAsync<Carrito>($"api/Carritos/{Id}");
+            // Cargar carrito con toda la información relacionada
+            carrito = await Http.GetFromJsonAsync<Carrito>($"api/Carritos/{Id}?incluirProductos=true&incluirUsuario=true&incluirPagos=true");
         }
         catch (Exception ex)
         {
@@ -158,6 +241,7 @@ else
         {
             "Activo" => "bg-primary",
             "Confirmado" => "bg-success",
+            "Completado" => "bg-info",
             "Cancelado" => "bg-danger",
             _ => "bg-secondary"
         };
@@ -167,11 +251,36 @@ else
     {
         return estadoPago switch
         {
-            "Pendiente" => "bg-warning",
+            "Pendiente" => "bg-warning text-dark",
             "Pagado" => "bg-success",
             "Parcial" => "bg-info",
             "Cancelado" => "bg-danger",
             _ => "bg-secondary"
+        };
+    }
+
+    // Tooltips para estados
+    private string GetEstadoTooltip(string estado)
+    {
+        return estado switch
+        {
+            "Activo" => "Carrito en proceso - El usuario está agregando productos",
+            "Confirmado" => "Pedido confirmado - Esperando pago y envío",
+            "Completado" => "Pedido completado - Entregrado y finalizado",
+            "Cancelado" => "Carrito cancelado - No se procesará",
+            _ => "Estado desconocido"
+        };
+    }
+
+    private string GetEstadoPagoTooltip(string estadoPago)
+    {
+        return estadoPago switch
+        {
+            "Pendiente" => "No se ha realizado ningún pago",
+            "Pagado" => "El monto total está completamente pagado",
+            "Parcial" => "Se realizó un pago parcial",
+            "Cancelado" => "Los pagos fueron cancelados/revertidos",
+            _ => "Estado de pago desconocido"
         };
     }
 
@@ -183,5 +292,10 @@ else
     private void Editar()
     {
         Navigation.NavigateTo($"/carritos/editar/{Id}");
+    }
+
+    private async Task ImprimirDetalles()
+    {
+        await JS.InvokeVoidAsync("window.print");
     }
 }

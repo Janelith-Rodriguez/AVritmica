@@ -118,6 +118,20 @@ namespace AVritmica.BD.Data
                 .HasMany(c => c.CompraDetalles)
                 .WithOne(cd => cd.Compra)
                 .HasForeignKey(cd => cd.CompraId);
+
+            // ... otras configuraciones
+
+            modelBuilder.Entity<StockMovimiento>()
+                .HasOne(sm => sm.Producto)
+                .WithMany()
+                .HasForeignKey(sm => sm.ProductoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<StockMovimiento>()
+                .HasOne(sm => sm.Carrito)
+                .WithMany()
+                .HasForeignKey(sm => sm.CarritoId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

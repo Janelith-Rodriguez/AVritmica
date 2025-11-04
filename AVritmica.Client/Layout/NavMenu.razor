@@ -1,117 +1,146 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿<div class="top-row ps-3 navbar navbar-dark bg-custom-gradient">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">AVritmica</a>
+        <a class="navbar-brand" href="">
+            <span class="bi bi-calculator-fill me-2"></span> AVritmica
+        </a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
     </div>
 </div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+<div class="@NavMenuCssClass nav-scrollable custom-navbar" @onclick="ToggleNavMenu">
     <nav class="flex-column">
         <!-- Inicio -->
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill" aria-hidden="true"></span> Inicio
+            <NavLink class="nav-link menu-item" href="" Match="NavLinkMatch.All">
+                <div class="menu-item-content">
+                    <span class="bi bi-house-door-fill menu-icon"></span>
+                    <span class="menu-text">Inicio</span>
+                </div>
             </NavLink>
         </div>
 
         <!-- Gestión de Productos -->
         <div class="nav-item px-3">
-            <div class="nav-link dropdown-toggle" @onclick="ToggleProductosMenu">
-                <span class="bi bi-box-seam" aria-hidden="true"></span> Productos
+            <div class="nav-link dropdown-toggle menu-item" @onclick="ToggleProductosMenu">
+                <div class="menu-item-content">
+                    <span class="bi bi-box-seam menu-icon"></span>
+                    <span class="menu-text">Gestión de Productos</span>
+                    <span class="bi bi-chevron-down dropdown-arrow"></span>
+                </div>
             </div>
-            <div class="dropdown-menu @(productosMenuOpen ? "show" : "")">
-                <NavLink class="dropdown-item" href="categorias">
-                    <span class="bi bi-tags" aria-hidden="true"></span> Categorías
+            <div class="dropdown-menu custom-dropdown @(productosMenuOpen ? "show" : "")">
+                <NavLink class="dropdown-item menu-dropdown-item" href="categorias">
+                    <span class="bi bi-tags me-2"></span>
+                    <span class="dropdown-text">Categorías</span>
                 </NavLink>
-                <NavLink class="dropdown-item" href="productos">
-                    <span class="bi bi-list-ul" aria-hidden="true"></span> Productos
+                <NavLink class="dropdown-item menu-dropdown-item" href="productos">
+                    <span class="bi bi-box me-2"></span>
+                    <span class="dropdown-text">Productos</span>
                 </NavLink>
-                <NavLink class="dropdown-item" href="stock-movimientos">
-                    <span class="bi bi-arrow-left-right" aria-hidden="true"></span> Movimientos de Stock
-                </NavLink>
-            </div>
-        </div>
-
-        <!-- Ventas y Compras -->
-        <div class="nav-item px-3">
-            <div class="nav-link dropdown-toggle" @onclick="ToggleVentasMenu">
-                <span class="bi bi-cart" aria-hidden="true"></span> Ventas
-            </div>
-            <div class="dropdown-menu @(ventasMenuOpen ? "show" : "")">
-                <NavLink class="dropdown-item" href="carritos">
-                    <span class="bi bi-cart-check" aria-hidden="true"></span> Carritos
-                </NavLink>
-                <NavLink class="dropdown-item" href="carrito-productos">
-                    <span class="bi bi-cart-plus" aria-hidden="true"></span> Items Carrito
-                </NavLink>
-                <NavLink class="dropdown-item" href="pagos">
-                    <span class="bi bi-credit-card" aria-hidden="true"></span> Pagos
+                <NavLink class="dropdown-item menu-dropdown-item" href="stock-movimientos">
+                    <span class="bi bi-arrow-left-right me-2"></span>
+                    <span class="dropdown-text">Movimientos de Stock</span>
                 </NavLink>
             </div>
         </div>
 
-        <!-- Compras/Inventario -->
+        <!-- Ventas -->
         <div class="nav-item px-3">
-            <div class="nav-link dropdown-toggle" @onclick="ToggleComprasMenu">
-                <span class="bi bi-truck" aria-hidden="true"></span> Compras
+            <div class="nav-link dropdown-toggle menu-item" @onclick="ToggleVentasMenu">
+                <div class="menu-item-content">
+                    <span class="bi bi-cart-check menu-icon"></span>
+                    <span class="menu-text">Ventas</span>
+                    <span class="bi bi-chevron-down dropdown-arrow"></span>
+                </div>
             </div>
-            <div class="dropdown-menu @(comprasMenuOpen ? "show" : "")">
-                <NavLink class="dropdown-item" href="compras">
-                    <span class="bi bi-receipt" aria-hidden="true"></span> Compras
+            <div class="dropdown-menu custom-dropdown @(ventasMenuOpen ? "show" : "")">
+                <NavLink class="dropdown-item menu-dropdown-item" href="carritos">
+                    <span class="bi bi-cart4 me-2"></span>
+                    <span class="dropdown-text">Carritos</span>
                 </NavLink>
-                <NavLink class="dropdown-item" href="compra-detalles">
-                    <span class="bi bi-receipt-cutoff" aria-hidden="true"></span> Detalles Compra
+                <NavLink class="dropdown-item menu-dropdown-item" href="carrito-productos">
+                    <span class="bi bi-cart-plus me-2"></span>
+                    <span class="dropdown-text">Items Carrito</span>
+                </NavLink>
+                <NavLink class="dropdown-item menu-dropdown-item" href="pagos">
+                    <span class="bi bi-credit-card me-2"></span>
+                    <span class="dropdown-text">Pagos</span>
                 </NavLink>
             </div>
         </div>
 
-        <!-- Gestión de Usuarios (CORREGIDO) -->
+        <!-- Compras -->
         <div class="nav-item px-3">
-            <div class="nav-link dropdown-toggle" @onclick="ToggleUsuariosMenu">
-                <span class="bi bi-people" aria-hidden="true"></span> Usuarios
+            <div class="nav-link dropdown-toggle menu-item" @onclick="ToggleComprasMenu">
+                <div class="menu-item-content">
+                    <span class="bi bi-truck menu-icon"></span>
+                    <span class="menu-text">Compras</span>
+                    <span class="bi bi-chevron-down dropdown-arrow"></span>
+                </div>
             </div>
-            <div class="dropdown-menu @(usuariosMenuOpen ? "show" : "")">
-                <NavLink class="dropdown-item" href="usuarios">
-                    <span class="bi bi-person-lines-fill" aria-hidden="true"></span> Gestión de Usuarios
+            <div class="dropdown-menu custom-dropdown @(comprasMenuOpen ? "show" : "")">
+                <NavLink class="dropdown-item menu-dropdown-item" href="compras">
+                    <span class="bi bi-receipt me-2"></span>
+                    <span class="dropdown-text">Compras</span>
                 </NavLink>
-                <NavLink class="dropdown-item" href="consultas">
-                    <span class="bi bi-chat-left-text" aria-hidden="true"></span> Consultas
+                <NavLink class="dropdown-item menu-dropdown-item" href="compra-detalles">
+                    <span class="bi bi-receipt-cutoff me-2"></span>
+                    <span class="dropdown-text">Detalles Compra</span>
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Gestión de Usuarios -->
+        <div class="nav-item px-3">
+            <div class="nav-link dropdown-toggle menu-item" @onclick="ToggleUsuariosMenu">
+                <div class="menu-item-content">
+                    <span class="bi bi-people-fill menu-icon"></span>
+                    <span class="menu-text">Gestión de Usuarios</span>
+                    <span class="bi bi-chevron-down dropdown-arrow"></span>
+                </div>
+            </div>
+            <div class="dropdown-menu custom-dropdown @(usuariosMenuOpen ? "show" : "")">
+                <NavLink class="dropdown-item menu-dropdown-item" href="usuarios">
+                    <span class="bi bi-person-gear me-2"></span>
+                    <span class="dropdown-text">Gestión de Usuarios</span>
+                </NavLink>
+                <NavLink class="dropdown-item menu-dropdown-item" href="consultas">
+                    <span class="bi bi-chat-left-text me-2"></span>
+                    <span class="dropdown-text">Consultas</span>
                 </NavLink>
             </div>
         </div>
 
         <!-- Reportes -->
         <div class="nav-item px-3">
-            <div class="nav-link dropdown-toggle" @onclick="ToggleReportesMenu">
-                <span class="bi bi-graph-up" aria-hidden="true"></span> Reportes
-            </div>
-            <div class="dropdown-menu @(reportesMenuOpen ? "show" : "")">
-                <NavLink class="dropdown-item" href="reporte-ventas">
-                    <span class="bi bi-currency-dollar" aria-hidden="true"></span> Ventas
-                </NavLink>
-                <NavLink class="dropdown-item" href="reporte-stock">
-                    <span class="bi bi-boxes" aria-hidden="true"></span> Stock
-                </NavLink>
-                <NavLink class="dropdown-item" href="reporte-compras">
-                    <span class="bi bi-cart-check" aria-hidden="true"></span> Compras
-                </NavLink>
-                <NavLink class="dropdown-item" href="reporte-usuarios">
-                    <span class="bi bi-people" aria-hidden="true"></span> Usuarios
-                </NavLink>
-            </div>
+            <NavLink class="nav-link menu-item" href="reportes">
+                <div class="menu-item-content">
+                    <span class="bi bi-bar-chart-fill menu-icon"></span>
+                    <span class="menu-text">Reportes</span>
+                </div>
+            </NavLink>
         </div>
 
-        <!-- Páginas de Ejemplo (puedes eliminar estas) -->
+        <!-- Separador -->
+        <div class="nav-divider"></div>
+
+        <!-- Páginas de Ejemplo -->
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square" aria-hidden="true"></span> Counter
+            <NavLink class="nav-link menu-item" href="counter">
+                <div class="menu-item-content">
+                    <span class="bi bi-plus-circle menu-icon"></span>
+                    <span class="menu-text">Counter</span>
+                </div>
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-cloud-sun" aria-hidden="true"></span> Weather
+            <NavLink class="nav-link menu-item" href="weather">
+                <div class="menu-item-content">
+                    <span class="bi bi-cloud-sun menu-icon"></span>
+                    <span class="menu-text">Weather</span>
+                </div>
             </NavLink>
         </div>
     </nav>
@@ -123,7 +152,6 @@
     private bool ventasMenuOpen = false;
     private bool comprasMenuOpen = false;
     private bool usuariosMenuOpen = false;
-    private bool reportesMenuOpen = false;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
@@ -135,50 +163,222 @@
     private void ToggleProductosMenu()
     {
         productosMenuOpen = !productosMenuOpen;
-        // Cerrar otros menús
         ventasMenuOpen = false;
         comprasMenuOpen = false;
         usuariosMenuOpen = false;
-        reportesMenuOpen = false;
     }
 
     private void ToggleVentasMenu()
     {
         ventasMenuOpen = !ventasMenuOpen;
-        // Cerrar otros menús
         productosMenuOpen = false;
         comprasMenuOpen = false;
         usuariosMenuOpen = false;
-        reportesMenuOpen = false;
     }
 
     private void ToggleComprasMenu()
     {
         comprasMenuOpen = !comprasMenuOpen;
-        // Cerrar otros menús
         productosMenuOpen = false;
         ventasMenuOpen = false;
         usuariosMenuOpen = false;
-        reportesMenuOpen = false;
     }
 
     private void ToggleUsuariosMenu()
     {
         usuariosMenuOpen = !usuariosMenuOpen;
-        // Cerrar otros menús
         productosMenuOpen = false;
         ventasMenuOpen = false;
         comprasMenuOpen = false;
-        reportesMenuOpen = false;
-    }
-
-    private void ToggleReportesMenu()
-    {
-        reportesMenuOpen = !reportesMenuOpen;
-        // Cerrar otros menús
-        productosMenuOpen = false;
-        ventasMenuOpen = false;
-        comprasMenuOpen = false;
-        usuariosMenuOpen = false;
     }
 }
+
+<style>
+    /* Gradiente principal aplicado a todo */
+    .bg-custom-gradient {
+        background: linear-gradient(180deg, #450050 0%, #e753fe 100%) !important;
+    }
+
+    .custom-navbar {
+        background: linear-gradient(180deg, #450050 0%, #e753fe 100%) !important;
+    }
+
+    /* Estilos personalizados para el menú */
+    .menu-item {
+        padding: 12px 15px !important;
+        border-radius: 8px;
+        margin: 4px 8px;
+        transition: all 0.3s ease;
+        border: none !important;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(231, 83, 254, 0.3);
+        }
+
+        .menu-item.active {
+            background: rgba(255, 255, 255, 0.25) !important;
+            box-shadow: 0 4px 20px rgba(231, 83, 254, 0.4);
+            border-left: 4px solid #ffffff;
+        }
+
+    .menu-item-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .menu-icon {
+        font-size: 1.2rem;
+        width: 24px;
+        text-align: center;
+        color: #ffffff;
+        opacity: 0.9;
+    }
+
+    .menu-text {
+        font-weight: 600;
+        color: #ffffff;
+        font-size: 0.95rem;
+        flex-grow: 1;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .dropdown-arrow {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+        transition: transform 0.3s ease;
+    }
+
+    .menu-item[aria-expanded="true"] .dropdown-arrow {
+        transform: rotate(180deg);
+        color: #ffffff;
+    }
+
+    .custom-dropdown {
+        background: linear-gradient(180deg, #4a0055 0%, #ec5afe 100%) !important;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 8px 25px rgba(69, 0, 80, 0.4);
+        margin-top: 5px;
+        padding: 8px 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+    }
+
+    .menu-dropdown-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 20px !important;
+        color: #ffffff !important;
+        transition: all 0.2s ease;
+        border-radius: 6px;
+        margin: 2px 8px;
+        width: auto;
+        background: transparent;
+    }
+
+        .menu-dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            color: #ffffff !important;
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(231, 83, 254, 0.3);
+        }
+
+        .menu-dropdown-item.active {
+            background: rgba(255, 255, 255, 0.25) !important;
+            color: #ffffff !important;
+            border-left: 3px solid #ffffff;
+        }
+
+    .dropdown-text {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #ffffff;
+    }
+
+    .menu-dropdown-item .bi {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+    }
+
+    .nav-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        margin: 15px 20px;
+    }
+
+    /* Animaciones suaves */
+    .nav-scrollable {
+        scroll-behavior: smooth;
+    }
+
+    /* Mejora visual para el brand */
+    .navbar-brand {
+        font-weight: 700;
+        font-size: 1.3rem;
+        color: #ffffff !important;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+        .navbar-brand:hover {
+            color: #ffffff !important;
+            text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.3);
+        }
+
+    /* Botón toggler personalizado */
+    .navbar-toggler {
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.25rem 0.5rem;
+    }
+
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    /* Efectos de brillo en hover */
+    .menu-item:hover .menu-icon,
+    .menu-dropdown-item:hover .bi {
+        filter: brightness(1.2);
+        transform: scale(1.1);
+        transition: all 0.3s ease;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .custom-dropdown {
+            margin: 5px 10px;
+            border-radius: 12px;
+        }
+
+        .menu-item {
+            margin: 3px 5px;
+            padding: 10px 12px !important;
+        }
+
+        .menu-text {
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Efecto de partículas sutiles en el fondo */
+    .custom-navbar {
+        position: relative;
+        overflow: hidden;
+    }
+
+        .custom-navbar::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(231, 83, 254, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(69, 0, 80, 0.1) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+</style>
