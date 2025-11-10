@@ -2,6 +2,7 @@
 @page "/categorias/editar/{Id:int}"
 @inject ICategoriaService CategoriaService
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <h3>@Titulo</h3>
 
@@ -9,34 +10,59 @@
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <div class="form-group">
-        <label for="nombre">Nombre *</label>
-        <InputText id="nombre" @bind-Value="categoria.Nombre" class="form-control" />
-        <ValidationMessage For="@(() => categoria.Nombre)" />
-    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre *</label>
+                <InputText id="nombre" @bind-Value="categoria.Nombre" class="form-control" placeholder="Ingrese el nombre de la categoría" />
+                <ValidationMessage For="@(() => categoria.Nombre)" />
+            </div>
 
-    <div class="form-group">
-        <label for="descripcion">Descripción</label>
-        <InputTextArea id="descripcion" @bind-Value="categoria.Descripcion" class="form-control" />
-        <ValidationMessage For="@(() => categoria.Descripcion)" />
+            <div class="mb-3">
+                <label for="descripcion" class="form-label">Descripción</label>
+                <InputTextArea id="descripcion" @bind-Value="categoria.Descripcion" class="form-control"
+                               placeholder="Ingrese una descripción para la categoría (opcional)"
+                               rows="4" />
+                <ValidationMessage For="@(() => categoria.Descripcion)" />
+                <div class="form-text">La descripción es opcional pero recomendada para mejor organización.</div>
+            </div>
+        </div>
     </div>
 
     <div class="mt-3">
-        <button type="submit" class="btn btn-primary" disabled="@cargando">Guardar</button>
-        <button type="button" class="btn btn-secondary" @onclick="Cancelar" disabled="@cargando">Cancelar</button>
+        <button type="submit" class="btn btn-primary" disabled="@guardando">
+            @if (guardando)
+            {
+                <span>
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Guardando...
+                </span>
+            }
+            else
+            {
+                <span>
+                    <i class="fas fa-save"></i> Guardar
+                </span>
+            }
+        </button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancelar" disabled="@guardando">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
     </div>
 </EditForm>
 
 @if (!string.IsNullOrEmpty(mensajeError))
 {
-    <div class="alert alert-danger mt-3">@mensajeError</div>
+    <div class="alert alert-danger mt-3">
+        <i class="fas fa-exclamation-triangle"></i> @mensajeError
+    </div>
 }
 
 @code {
     [Parameter] public int Id { get; set; }
 
     private Categoria categoria = new();
-    private bool cargando = false;
+    private bool guardando = false;
     private string mensajeError = string.Empty;
     private string Titulo => Id == 0 ? "Nueva Categoría" : "Editar Categoría";
 
@@ -50,36 +76,54 @@
 
     private async Task CargarCategoria()
     {
-        cargando = true;
+        guardando = true;
         StateHasChanged();
 
-        var respuesta = await CategoriaService.GetCategoria(Id);
-        if (!respuesta.Error && respuesta.Respuesta != null)
+        try
         {
-            categoria = respuesta.Respuesta;
+            var respuesta = await CategoriaService.GetCategoria(Id);
+            if (!respuesta.Error && respuesta.Respuesta != null)
+            {
+                categoria = respuesta.Respuesta;
+            }
+            else
+            {
+                mensajeError = await respuesta.ObtenerError();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            mensajeError = await respuesta.ObtenerError();
+            mensajeError = $"Error al cargar la categoría: {ex.Message}";
         }
-
-        cargando = false;
-        StateHasChanged();
+        finally
+        {
+            guardando = false;
+            StateHasChanged();
+        }
     }
 
     private async Task GuardarCategoria()
     {
-        cargando = true;
+        guardando = true;
         mensajeError = string.Empty;
         StateHasChanged();
 
         try
         {
+            if (string.IsNullOrWhiteSpace(categoria.Nombre))
+            {
+                mensajeError = "El nombre de la categoría es requerido";
+                guardando = false;
+                StateHasChanged();
+                return;
+            }
+
             if (Id == 0)
             {
                 var respuesta = await CategoriaService.CreateCategoria(categoria);
                 if (!respuesta.Error)
                 {
+                    await JS.InvokeVoidAsync("alert", "✅ Categoría creada correctamente");
                     Navigation.NavigateTo("/categorias");
                 }
                 else
@@ -92,6 +136,7 @@
                 var respuesta = await CategoriaService.UpdateCategoria(Id, categoria);
                 if (!respuesta.Error)
                 {
+                    await JS.InvokeVoidAsync("alert", "✅ Categoría actualizada correctamente");
                     Navigation.NavigateTo("/categorias");
                 }
                 else
@@ -104,9 +149,11 @@
         {
             mensajeError = $"Error: {ex.Message}";
         }
-
-        cargando = false;
-        StateHasChanged();
+        finally
+        {
+            guardando = false;
+            StateHasChanged();
+        }
     }
 
     private void Cancelar()

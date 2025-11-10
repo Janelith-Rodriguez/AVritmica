@@ -146,20 +146,19 @@ else
             <table class="table table-striped table-hover">
                 <thead class="table-dark">
                     <tr>
-                        <th>ID</th>
                         <th>Producto</th>
                         <th>Tipo</th>
                         <th>Cantidad</th>
                         <th>Fecha</th>
                         <th>Descripción</th>
                         <th>Detalles Relacionados</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var movimiento in movimientosFiltrados)
                     {
                         <tr class="@GetRowClass(movimiento.TipoMovimiento)">
-                            <td>@movimiento.Id</td>
                             <td>
                                 <strong>@movimiento.Producto?.Nombre</strong>
                                 <br />
@@ -297,6 +296,22 @@ else
                                     <small>@movimiento.Descripcion</small>
                                 }
                             </td>
+                            <td>
+                                <div class="btn-group-vertical btn-group-sm" role="group">
+                                    <!-- Botón Ver Detalles con ojo -->
+                                    <button class="btn btn-info" @onclick="() => VerDetalles(movimiento.Id)" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <!-- Botón Editar con lápiz -->
+                                    <button class="btn btn-warning" @onclick="() => EditarMovimiento(movimiento.Id)" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <!-- Botón Eliminar con tacho de basura -->
+                                    <button class="btn btn-danger" @onclick="() => EliminarMovimiento(movimiento)" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -408,6 +423,48 @@ else
         catch (Exception ex)
         {
             Console.WriteLine($"Error cargando estadísticas: {ex.Message}");
+        }
+    }
+
+    private void VerDetalles(int id)
+    {
+        Navigation.NavigateTo($"/stock-movimientos/detalles/{id}");
+    }
+
+    private void EditarMovimiento(int id)
+    {
+        Navigation.NavigateTo($"/stock-movimientos/editar/{id}");
+    }
+
+    private async Task EliminarMovimiento(StockMovimiento movimiento)
+    {
+        var confirmado = await JS.InvokeAsync<bool>("confirm",
+            $"¿Está seguro de eliminar este movimiento de stock?\n\n" +
+            $"Producto: {movimiento.Producto?.Nombre}\n" +
+            $"Tipo: {movimiento.TipoMovimiento}\n" +
+            $"Cantidad: {movimiento.Cantidad}\n\n" +
+            "Esta acción no se puede deshacer.");
+
+        if (confirmado)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"api/StockMovimientos/{movimiento.Id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", "✅ Movimiento eliminado correctamente");
+                    await CargarDatos();
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "❌ Error al eliminar el movimiento");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
+            }
         }
     }
 
@@ -553,5 +610,9 @@ else
 
     .badge {
         font-size: 0.75em;
+    }
+
+    .btn-group-vertical .btn {
+        margin-bottom: 2px;
     }
 </style>

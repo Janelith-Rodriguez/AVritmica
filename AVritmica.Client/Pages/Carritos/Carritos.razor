@@ -57,7 +57,6 @@ else
             <table class="table table-striped table-hover">
                 <thead class="table-dark">
                     <tr>
-                        <th>ID</th>
                         <th>Usuario</th>
                         <th>Fecha Creación</th>
                         <th>Productos</th>
@@ -72,15 +71,24 @@ else
                     @foreach (var carrito in carritosFiltrados)
                     {
                         <tr>
-                            <td>@carrito.Id</td>
                             <td>
                                 <strong>@carrito.Usuario?.Nombre @carrito.Usuario?.Apellido</strong>
                                 <br />
                                 <small class="text-muted">@carrito.Usuario?.Email</small>
+                                <br />
+                                <small class="text-muted">@carrito.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</small>
                             </td>
-                            <td>@carrito.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>
-                                <!-- NUEVO: Información de productos -->
+                                @if (carrito.FechaConfirmacion.HasValue)
+                                {
+                                    <small>Confirmado: @carrito.FechaConfirmacion.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                }
+                                else
+                                {
+                                    <small class="text-muted">No confirmado</small>
+                                }
+                            </td>
+                            <td>
                                 @if (carrito.CarritoProductos?.Any() == true)
                                 {
                                     <div>
@@ -270,7 +278,7 @@ else
     private async Task EliminarCarrito(Carrito carrito)
     {
         bool confirmado = await JS.InvokeAsync<bool>("confirm",
-            $"¿Está seguro de eliminar el carrito #{carrito.Id}?\n\nUsuario: {carrito.Usuario?.Nombre}\nProductos: {carrito.CarritoProductos?.Count ?? 0}\n\nEsta acción no se puede deshacer.");
+            $"¿Está seguro de eliminar el carrito de {carrito.Usuario?.Nombre}?\n\nProductos: {carrito.CarritoProductos?.Count ?? 0}\nMonto Total: {carrito.MontoTotal.ToString("C")}\n\nEsta acción no se puede deshacer.");
 
         if (confirmado)
         {

@@ -11,6 +11,7 @@
         <div class="spinner-border" role="status">
             <span class="visually-hidden">Cargando...</span>
         </div>
+        <p class="mt-2">Cargando consultas...</p>
     </div>
 }
 else
@@ -18,7 +19,7 @@ else
     <div class="row mb-4">
         <div class="col-md-8">
             <div class="card bg-light">
-                <div class="card-body py-2">
+                <div class="card-body py-3">
                     <div class="row">
                         <div class="col-md-3">
                             <div class="text-center">
@@ -50,10 +51,10 @@ else
         </div>
         <div class="col-md-4 text-end">
             <button class="btn btn-outline-primary" @onclick="ToggleFiltros">
-                <i class="fas fa-filter"></i> Filtros
+                <i class="fas fa-filter me-1"></i> Filtros
             </button>
             <button class="btn btn-success" @onclick="NuevaConsulta">
-                <i class="fas fa-plus"></i> Nueva Consulta
+                <i class="fas fa-plus me-1"></i> Nueva Consulta
             </button>
         </div>
     </div>
@@ -61,8 +62,10 @@ else
     @if (mostrarFiltros)
     {
         <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Filtros de Búsqueda</h5>
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter me-2"></i> Filtros de Búsqueda
+                </h5>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -97,10 +100,10 @@ else
                 </div>
                 <div class="text-end">
                     <button class="btn btn-primary" @onclick="AplicarFiltros">
-                        <i class="fas fa-search"></i> Aplicar Filtros
+                        <i class="fas fa-search me-1"></i> Aplicar Filtros
                     </button>
                     <button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">
-                        <i class="fas fa-broom"></i> Limpiar
+                        <i class="fas fa-broom me-1"></i> Limpiar
                     </button>
                 </div>
             </div>
@@ -110,7 +113,7 @@ else
     @if (!string.IsNullOrEmpty(mensajeInfo))
     {
         <div class="alert alert-info">
-            @mensajeInfo
+            <i class="fas fa-info-circle me-2"></i> @mensajeInfo
         </div>
     }
 
@@ -120,7 +123,6 @@ else
             <table class="table table-striped table-hover">
                 <thead class="table-dark">
                     <tr>
-                        <th>ID</th>
                         <th>Nombre</th>
                         <th>Email</th>
                         <th>Mensaje</th>
@@ -134,7 +136,6 @@ else
                     @foreach (var consulta in consultasFiltradas)
                     {
                         <tr class="@((consulta.Leida ?? false) ? "" : "table-warning")">
-                            <td>@consulta.Id</td>
                             <td>
                                 <strong>@consulta.Nombre</strong>
                                 @if (!(consulta.Leida ?? false))
@@ -144,7 +145,7 @@ else
                             </td>
                             <td>
                                 <a href="mailto:@consulta.Email" class="text-decoration-none">
-                                    <i class="fas fa-envelope"></i> @consulta.Email
+                                    <i class="fas fa-envelope me-1"></i> @consulta.Email
                                 </a>
                             </td>
                             <td>
@@ -158,11 +159,15 @@ else
                             <td>
                                 @if (consulta.Leida ?? false)
                                 {
-                                    <span class="badge bg-success">Leída</span>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Leída
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-warning">No Leída</span>
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-clock me-1"></i>No Leída
+                                    </span>
                                 }
                             </td>
                             <td>
@@ -176,21 +181,23 @@ else
                                 }
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-info" @onclick="() => VerConsulta(consulta)" title="Ver detalles">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                @if (!(consulta.Leida ?? false))
-                                {
-                                    <button class="btn btn-sm btn-success" @onclick="() => MarcarComoLeida(consulta)" title="Marcar como leída">
-                                        <i class="fas fa-check"></i>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-info" @onclick="() => VerConsulta(consulta)" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
                                     </button>
-                                }
-                                <button class="btn btn-sm btn-primary" @onclick="() => ResponderConsulta(consulta)" title="Responder">
-                                    <i class="fas fa-reply"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" @onclick="() => EliminarConsulta(consulta)" title="Eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                    @if (!(consulta.Leida ?? false))
+                                    {
+                                        <button class="btn btn-success" @onclick="() => MarcarComoLeida(consulta)" title="Marcar como leída">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    }
+                                    <button class="btn btn-primary" @onclick="() => ResponderConsulta(consulta)" title="Responder">
+                                        <i class="fas fa-reply"></i>
+                                    </button>
+                                    <button class="btn btn-danger" @onclick="() => EliminarConsulta(consulta)" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -201,26 +208,27 @@ else
         <div class="d-flex justify-content-between align-items-center mt-3">
             <div>
                 <span class="text-muted">
+                    <i class="fas fa-list me-1"></i>
                     Mostrando @consultasFiltradas.Count de @consultas.Count consultas
                 </span>
             </div>
             <div>
                 <button class="btn btn-outline-info" @onclick="ExportarConsultas">
-                    <i class="fas fa-download"></i> Exportar
+                    <i class="fas fa-download me-1"></i> Exportar
                 </button>
             </div>
         </div>
     }
     else
     {
-        <div class="alert alert-warning text-center">
+        <div class="alert alert-warning text-center py-4">
             <i class="fas fa-inbox fa-3x mb-3 text-muted"></i>
             <h4>No se encontraron consultas</h4>
             <p>@(consultas.Any() ? "No hay consultas que coincidan con los filtros aplicados." : "No hay consultas registradas en el sistema.")</p>
             @if (!consultas.Any())
             {
-                <button class="btn btn-primary" @onclick="NuevaConsulta">
-                    <i class="fas fa-plus"></i> Crear Primera Consulta
+                <button class="btn btn-primary mt-2" @onclick="NuevaConsulta">
+                    <i class="fas fa-plus me-1"></i> Crear Primera Consulta
                 </button>
             }
         </div>
@@ -257,11 +265,11 @@ else
         {
             consultas = await Http.GetFromJsonAsync<List<Consulta>>("api/Consultas") ?? new();
             consultasFiltradas = consultas;
-            mensajeInfo = $"Se cargaron {consultas.Count} consultas";
+            mensajeInfo = $"✅ Se cargaron {consultas.Count} consultas";
         }
         catch (Exception ex)
         {
-            mensajeInfo = $"Error al cargar consultas: {ex.Message}";
+            mensajeInfo = $"❌ Error al cargar consultas: {ex.Message}";
             consultas = new();
             consultasFiltradas = new();
         }
@@ -303,7 +311,7 @@ else
     {
         consultasFiltradas = consultas;
 
-        // Aplicar filtro por estado - CORREGIDO para bool?
+        // Aplicar filtro por estado
         if (!string.IsNullOrEmpty(filtroEstado))
         {
             consultasFiltradas = filtroEstado switch
@@ -337,7 +345,7 @@ else
                 .ToList();
         }
 
-        mensajeInfo = $"Se encontraron {consultasFiltradas.Count} consultas con los filtros aplicados";
+        mensajeInfo = $"✅ Se encontraron {consultasFiltradas.Count} consultas con los filtros aplicados";
         StateHasChanged();
     }
 
@@ -348,7 +356,7 @@ else
         filtroFechaInicio = null;
         filtroFechaFin = null;
         consultasFiltradas = consultas;
-        mensajeInfo = "Filtros limpiados";
+        mensajeInfo = "✅ Filtros limpiados";
         StateHasChanged();
     }
 
@@ -373,22 +381,22 @@ else
                 consulta.Leida = true;
                 await CargarEstadisticas();
                 StateHasChanged();
-                await JS.InvokeVoidAsync("alert", "Consulta marcada como leída");
+                await JS.InvokeVoidAsync("alert", "✅ Consulta marcada como leída");
             }
             else
             {
-                await JS.InvokeVoidAsync("alert", "Error al marcar la consulta como leída");
+                await JS.InvokeVoidAsync("alert", "❌ Error al marcar la consulta como leída");
             }
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
         }
     }
 
     private async Task ResponderConsulta(Consulta consulta)
     {
-        var asunto = $"Re: Consulta #{consulta.Id} - AVritmica";
+        var asunto = $"Re: Consulta de {consulta.Nombre} - AVritmica";
         var cuerpo = $"\n\n----------------------------------------\nConsulta original de {consulta.Nombre} ({consulta.Email}):\n{consulta.Mensaje}";
 
         var mailtoLink = $"mailto:{consulta.Email}?subject={Uri.EscapeDataString(asunto)}&body={Uri.EscapeDataString(cuerpo)}";
@@ -398,7 +406,7 @@ else
     private async Task EliminarConsulta(Consulta consulta)
     {
         var confirmado = await JS.InvokeAsync<bool>("confirm",
-            $"¿Está seguro de eliminar la consulta de {consulta.Nombre}?");
+            $"¿Está seguro de eliminar la consulta de {consulta.Nombre}?\n\nEmail: {consulta.Email}\nFecha: {consulta.FechaEnvio.ToString("dd/MM/yyyy HH:mm")}\n\nEsta acción no se puede deshacer.");
 
         if (confirmado)
         {
@@ -408,18 +416,18 @@ else
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JS.InvokeVoidAsync("alert", "Consulta eliminada correctamente");
+                    await JS.InvokeVoidAsync("alert", "✅ Consulta eliminada correctamente");
                     await CargarConsultas();
                     await CargarEstadisticas();
                 }
                 else
                 {
-                    await JS.InvokeVoidAsync("alert", "Error al eliminar la consulta");
+                    await JS.InvokeVoidAsync("alert", "❌ Error al eliminar la consulta");
                 }
             }
             catch (Exception ex)
             {
-                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
             }
         }
     }
@@ -430,12 +438,11 @@ else
         {
             var datosExportar = consultasFiltradas.Select(c => new
             {
-                c.Id,
-                c.Nombre,
-                c.Email,
+                Nombre = c.Nombre,
+                Email = c.Email,
                 Mensaje = c.Mensaje.Replace("\"", "'"),
                 Fecha = c.FechaEnvio.ToString("dd/MM/yyyy HH:mm"),
-                Estado = (c.Leida ?? false) ? "Leída" : "No Leída", // CORREGIDO
+                Estado = (c.Leida ?? false) ? "Leída" : "No Leída",
                 Usuario = c.Usuario?.Nombre ?? "Visitante"
             }).ToList();
 
@@ -443,20 +450,38 @@ else
 
             if (resultado)
             {
-                await JS.InvokeVoidAsync("alert", "Consultas exportadas correctamente");
+                await JS.InvokeVoidAsync("alert", "✅ Consultas exportadas correctamente");
             }
             else
             {
-                await JS.InvokeVoidAsync("alert", "Error al exportar las consultas");
+                await JS.InvokeVoidAsync("alert", "❌ Error al exportar las consultas");
             }
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
         }
     }
 
     // Clases auxiliares
+    public class Consulta
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Mensaje { get; set; } = string.Empty;
+        public DateTime FechaEnvio { get; set; }
+        public bool? Leida { get; set; }
+        public Usuario? Usuario { get; set; }
+    }
+
+    public class Usuario
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+    }
+
     public class EstadisticasConsultas
     {
         public int TotalConsultas { get; set; }

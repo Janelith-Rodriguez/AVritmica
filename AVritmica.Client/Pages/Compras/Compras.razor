@@ -16,9 +16,15 @@
 else
 {
     <div class="mb-3">
-        <button class="btn btn-primary" @onclick="NuevaCompra">Nueva Compra</button>
-        <button class="btn btn-success" @onclick="CrearCompraConDetalles">Compra con Detalles</button>
-        <button class="btn btn-outline-secondary" @onclick="Refrescar">Refrescar</button>
+        <button class="btn btn-primary" @onclick="NuevaCompra">
+            <i class="fas fa-plus me-1"></i> Nueva Compra
+        </button>
+        <button class="btn btn-success" @onclick="CrearCompraConDetalles">
+            <i class="fas fa-shopping-cart me-1"></i> Compra con Detalles
+        </button>
+        <button class="btn btn-outline-secondary" @onclick="Refrescar">
+            <i class="fas fa-sync-alt me-1"></i> Refrescar
+        </button>
     </div>
 
     <div class="row mb-3">
@@ -26,11 +32,15 @@ else
             <input type="text" class="form-control" placeholder="Buscar por descripción..." @bind="terminoBusqueda" @oninput="OnBuscar" />
         </div>
         <div class="col-md-4">
-            <button class="btn btn-info w-100" @onclick="MostrarFiltroFechas">Filtrar por Fechas</button>
+            <button class="btn btn-info w-100" @onclick="MostrarFiltroFechas">
+                <i class="fas fa-calendar-alt me-1"></i> Filtrar por Fechas
+            </button>
         </div>
         <div class="col-md-4">
             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <button class="btn btn-warning" @onclick="ExportarComprasCSV">Exportar</button>
+                <button class="btn btn-warning" @onclick="ExportarComprasCSV">
+                    <i class="fas fa-download me-1"></i> Exportar
+                </button>
             </div>
         </div>
     </div>
@@ -47,8 +57,12 @@ else
                 <input type="date" class="form-control" @bind="fechaFin" />
             </div>
             <div class="col-md-4 d-flex align-items-end">
-                <button class="btn btn-primary me-2" @onclick="AplicarFiltroFechas">Aplicar</button>
-                <button class="btn btn-secondary" @onclick="LimpiarFiltroFechas">Limpiar</button>
+                <button class="btn btn-primary me-2" @onclick="AplicarFiltroFechas">
+                    <i class="fas fa-filter me-1"></i> Aplicar
+                </button>
+                <button class="btn btn-secondary" @onclick="LimpiarFiltroFechas">
+                    <i class="fas fa-times me-1"></i> Limpiar
+                </button>
             </div>
         </div>
     }
@@ -59,7 +73,6 @@ else
             <table class="table table-striped table-hover">
                 <thead class="table-dark">
                     <tr>
-                        <th>ID</th>
                         <th>Fecha Compra</th>
                         <th>Descripción</th>
                         <th>Productos</th>
@@ -72,8 +85,10 @@ else
                     @foreach (var compra in comprasFiltradas)
                     {
                         <tr>
-                            <td>@compra.Id</td>
-                            <td>@compra.FechaCompra.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                <strong>@compra.FechaCompra.ToString("dd/MM/yyyy")</strong><br>
+                                <small class="text-muted">@compra.FechaCompra.ToString("HH:mm")</small>
+                            </td>
                             <td>
                                 @if (string.IsNullOrEmpty(compra.Descripcion))
                                 {
@@ -94,25 +109,28 @@ else
                                 <strong>@compra.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra).ToString("C")</strong>
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-info" @onclick="() => VerDetalles(compra.Id)" title="Ver detalles">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-warning" @onclick="() => EditarCompra(compra.Id)" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" @onclick="() => EliminarCompra(compra)" title="Eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-success" @onclick="() => VerDetallesCompra(compra.Id)" title="Ver productos">
-                                    <i class="fas fa-boxes"></i>
-                                </button>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-info" @onclick="() => VerDetalles(compra.Id)" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-warning" @onclick="() => EditarCompra(compra.Id)" title="Editar">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <button class="btn btn-danger" @onclick="() => EliminarCompra(compra)" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <button class="btn btn-success" @onclick="() => VerDetallesCompra(compra.Id)" title="Ver productos">
+                                        <i class="fas fa-boxes"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
                 </tbody>
                 <tfoot>
                     <tr class="table-primary">
-                        <td colspan="4" class="text-end"><strong>Total General:</strong></td>
+                        <td colspan="2" class="text-end"><strong>Total General:</strong></td>
+                        <td><strong>@comprasFiltradas.Sum(c => c.CompraDetalles.Count)</strong></td>
                         <td><strong>@comprasFiltradas.Sum(c => c.CompraDetalles.Sum(cd => cd.Cantidad))</strong></td>
                         <td><strong>@comprasFiltradas.Sum(c => c.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra)).ToString("C")</strong></td>
                         <td></td>
@@ -122,6 +140,7 @@ else
         </div>
 
         <div class="alert alert-info">
+            <i class="fas fa-chart-bar me-2"></i>
             <strong>Resumen:</strong>
             @comprasFiltradas.Count compras -
             @comprasFiltradas.Sum(c => c.CompraDetalles.Count) productos -
@@ -131,6 +150,7 @@ else
     else
     {
         <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
             No se encontraron compras.
         </div>
     }
@@ -204,11 +224,12 @@ else
             if (comprasFiltradasPorFecha != null)
             {
                 comprasFiltradas = comprasFiltradasPorFecha;
+                await JS.InvokeVoidAsync("alert", $"✅ Se encontraron {comprasFiltradas.Count} compras en el rango de fechas");
             }
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error al filtrar por fechas: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error al filtrar por fechas: {ex.Message}");
         }
     }
 
@@ -218,6 +239,7 @@ else
         fechaFin = DateTime.Today;
         await CargarCompras();
         FiltrarCompras();
+        await JS.InvokeVoidAsync("alert", "✅ Filtros de fecha limpiados");
     }
 
     private void NuevaCompra()
@@ -245,18 +267,18 @@ else
                 if (response.IsSuccessStatusCode)
                 {
                     var compraId = await response.Content.ReadFromJsonAsync<int>();
-                    await JS.InvokeVoidAsync("alert", "Compra creada correctamente. Ahora puede agregar productos.");
-                    Navigation.NavigateTo($"/compra-detalles?compraId={compraId}");
+                    await JS.InvokeVoidAsync("alert", "✅ Compra creada correctamente. Ahora puede agregar productos.");
+                    Navigation.NavigateTo($"/compra-detalles/{compraId}");
                 }
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
-                    await JS.InvokeVoidAsync("alert", $"Error al crear compra: {error}");
+                    await JS.InvokeVoidAsync("alert", $"❌ Error al crear compra: {error}");
                 }
             }
             catch (Exception ex)
             {
-                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
             }
         }
     }
@@ -273,14 +295,17 @@ else
 
     private void VerDetallesCompra(int id)
     {
-        Navigation.NavigateTo($"/compra-detalles?compraId={id}");
+        Navigation.NavigateTo($"/compra-detalles/{id}");
     }
 
     private async Task EliminarCompra(Compra compra)
     {
         bool confirmado = await JS.InvokeAsync<bool>("confirm",
-            $"¿Está seguro de eliminar la compra #{compra.Id} del {compra.FechaCompra.ToString("dd/MM/yyyy")}?\n\n" +
-            $"Esta acción eliminará {compra.CompraDetalles.Count} productos y no se puede deshacer.");
+            $"¿Está seguro de eliminar la compra del {compra.FechaCompra.ToString("dd/MM/yyyy")}?\n\n" +
+            $"Descripción: {compra.Descripcion ?? "Sin descripción"}\n" +
+            $"Productos: {compra.CompraDetalles.Count}\n" +
+            $"Total: {compra.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra).ToString("C")}\n\n" +
+            "Esta acción eliminará todos los productos asociados y no se puede deshacer.");
 
         if (confirmado)
         {
@@ -290,17 +315,17 @@ else
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JS.InvokeVoidAsync("alert", "Compra eliminada correctamente");
+                    await JS.InvokeVoidAsync("alert", "✅ Compra eliminada correctamente");
                     await CargarCompras();
                 }
                 else
                 {
-                    await JS.InvokeVoidAsync("alert", "Error al eliminar la compra");
+                    await JS.InvokeVoidAsync("alert", "❌ Error al eliminar la compra");
                 }
             }
             catch (Exception ex)
             {
-                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
             }
         }
     }
@@ -313,7 +338,7 @@ else
             var csvContent = new System.Text.StringBuilder();
 
             // Encabezados
-            csvContent.AppendLine("ID,Fecha,Descripción,Productos,Unidades,Total");
+            csvContent.AppendLine("Fecha,Descripción,Productos,Unidades,Total");
 
             // Datos
             foreach (var compra in comprasFiltradas)
@@ -322,7 +347,6 @@ else
                 var total = compra.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra);
 
                 csvContent.AppendLine(
-                    $"{compra.Id}," +
                     $"{compra.FechaCompra:dd/MM/yyyy HH:mm}," +
                     $"{descripcion}," +
                     $"{compra.CompraDetalles.Count}," +
@@ -343,69 +367,50 @@ else
             csvContent.AppendLine($"Total General,{totalGeneral:F2}");
 
             await JS.InvokeVoidAsync("descargarCSV", "compras.csv", csvContent.ToString());
-            await JS.InvokeVoidAsync("alert", "Archivo CSV descargado correctamente");
+            await JS.InvokeVoidAsync("alert", "✅ Archivo CSV descargado correctamente");
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error al exportar CSV: {ex.Message}");
-        }
-    }
-
-    // Método de respaldo para JSON (renombrado)
-    private async Task ExportarComprasJSONFallback()
-    {
-        try
-        {
-            var comprasExportar = comprasFiltradas.Select(c => new
-            {
-                ID = c.Id,
-                Fecha = c.FechaCompra.ToString("dd/MM/yyyy HH:mm"),
-                Descripcion = c.Descripcion ?? "Sin descripción",
-                Productos = c.CompraDetalles.Count,
-                Unidades = c.CompraDetalles.Sum(cd => cd.Cantidad),
-                Total = c.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra)
-            });
-
-            var json = System.Text.Json.JsonSerializer.Serialize(comprasExportar, new System.Text.Json.JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-
-            await JS.InvokeVoidAsync("descargarArchivo", "compras.json", json);
-        }
-        catch (Exception ex)
-        {
-            await JS.InvokeVoidAsync("alert", $"Error al exportar JSON: {ex.Message}");
-        }
-    }
-
-    private async Task DescargarArchivoSimple(string contenido, string nombreArchivo)
-    {
-        try
-        {
-            var bytes = System.Text.Encoding.UTF8.GetBytes(contenido);
-            var base64 = Convert.ToBase64String(bytes);
-
-            var js = $@"
-            var link = document.createElement('a');
-            link.href = 'data:application/json;base64,{base64}';
-            link.download = '{nombreArchivo}';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        ";
-
-            await JS.InvokeVoidAsync("eval", js);
-            await JS.InvokeVoidAsync("alert", "Archivo descargado correctamente");
-        }
-        catch (Exception ex)
-        {
-            await JS.InvokeVoidAsync("alert", $"Error en descarga: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error al exportar CSV: {ex.Message}");
         }
     }
 
     private async Task Refrescar()
     {
         await CargarCompras();
+        await JS.InvokeVoidAsync("alert", "✅ Lista de compras actualizada");
+    }
+
+    // Clases para la entidad
+    public class Compra
+    {
+        public int Id { get; set; }
+        public DateTime FechaCompra { get; set; }
+        public string? Descripcion { get; set; }
+        public List<CompraDetalle> CompraDetalles { get; set; } = new();
+    }
+
+    public class CompraDetalle
+    {
+        public int Id { get; set; }
+        public int CompraId { get; set; }
+        public int ProductoId { get; set; }
+        public int Cantidad { get; set; }
+        public decimal PrecioCompra { get; set; }
+        public Producto? Producto { get; set; }
+    }
+
+    public class Producto
+    {
+        public int Id { get; set; }
+        public string? Nombre { get; set; }
+        public string? Descripcion { get; set; }
+        public Categoria? Categoria { get; set; }
+    }
+
+    public class Categoria
+    {
+        public int Id { get; set; }
+        public string? Nombre { get; set; }
     }
 }

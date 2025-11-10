@@ -11,12 +11,13 @@
         <div class="spinner-border" role="status">
             <span class="visually-hidden">Cargando...</span>
         </div>
+        <p class="mt-2">Cargando información del pago...</p>
     </div>
 }
 else if (pago == null)
 {
     <div class="alert alert-danger">
-        Pago no encontrado
+        <i class="fas fa-exclamation-triangle me-2"></i> Pago no encontrado
     </div>
 }
 else
@@ -24,35 +25,74 @@ else
     <div class="row">
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Información del Pago</h5>
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-credit-card me-2"></i> Información del Pago
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>ID:</strong> @pago.Id</p>
-                    <p><strong>Fecha:</strong> @pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</p>
-                    <p><strong>Método:</strong> @pago.MetodoPago</p>
-                    <p><strong>Monto:</strong> @pago.MontoPagado.ToString("C")</p>
-                    <p>
-                        <strong>Estado:</strong>
-                        <span class="badge @GetEstadoPagoBadgeClass(pago.EstadoPago)">@pago.EstadoPago</span>
-                    </p>
-                    <p><strong>Saldo:</strong> @pago.Saldo.ToString("C")</p>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="text-muted" width="40%"><strong>Fecha:</strong></td>
+                            <td>@pago.FechaPago.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Método:</strong></td>
+                            <td>
+                                <span class="badge bg-secondary">@pago.MetodoPago</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Monto:</strong></td>
+                            <td class="text-success fw-bold fs-5">@pago.MontoPagado.ToString("C")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Estado:</strong></td>
+                            <td>
+                                <span class="badge @GetEstadoPagoBadgeClass(pago.EstadoPago)">@pago.EstadoPago</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Saldo:</strong></td>
+                            <td class="@(pago.Saldo > 0 ? "text-warning" : "text-success") fw-bold">
+                                @pago.Saldo.ToString("C")
+                            </td>
+                        </tr>
+                    </table>
                 </div>
             </div>
         </div>
 
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Información del Carrito</h5>
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shopping-cart me-2"></i> Información del Carrito
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Carrito ID:</strong> #@pago.CarritoId</p>
-                    <p><strong>Usuario:</strong> @pago.Carrito?.Usuario?.Nombre</p>
-                    <p><strong>Email:</strong> @pago.Carrito?.Usuario?.Email</p>
-                    <p><strong>Total Carrito:</strong> @pago.Carrito?.MontoTotal.ToString("C")</p>
-                    <p><strong>Estado Carrito:</strong> @pago.Carrito?.Estado</p>
-                    <p><strong>Estado Pago Carrito:</strong> @pago.Carrito?.EstadoPago</p>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="text-muted" width="40%"><strong>Usuario:</strong></td>
+                            <td>@pago.Carrito?.Usuario?.Nombre</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Email:</strong></td>
+                            <td>@pago.Carrito?.Usuario?.Email</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Total Carrito:</strong></td>
+                            <td class="fw-bold">@pago.Carrito?.MontoTotal.ToString("C")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Estado Carrito:</strong></td>
+                            <td>@pago.Carrito?.Estado</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Estado Pago:</strong></td>
+                            <td>@pago.Carrito?.EstadoPago</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
         </div>
@@ -61,20 +101,22 @@ else
     <div class="row mt-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Productos en el Carrito</h5>
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes me-2"></i> Productos en el Carrito
+                    </h5>
                 </div>
                 <div class="card-body">
                     @if (pago.Carrito?.CarritoProductos?.Any() == true)
                     {
                         <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
                                     <tr>
                                         <th>Producto</th>
-                                        <th>Cantidad</th>
-                                        <th>Precio Unitario</th>
-                                        <th>Subtotal</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-end">Precio Unitario</th>
+                                        <th class="text-end">Subtotal</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -82,16 +124,22 @@ else
                                     {
                                         <tr>
                                             <td>@item.Producto?.Nombre</td>
-                                            <td>@item.Cantidad</td>
-                                            <td>@item.PrecioUnitario.ToString("C")</td>
-                                            <td>@((item.Cantidad * item.PrecioUnitario).ToString("C"))</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary">@item.Cantidad</span>
+                                            </td>
+                                            <td class="text-end">@item.PrecioUnitario.ToString("C")</td>
+                                            <td class="text-end">
+                                                <strong class="text-success">@((item.Cantidad * item.PrecioUnitario).ToString("C"))</strong>
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>
-                                <tfoot>
+                                <tfoot class="table-primary">
                                     <tr>
                                         <td colspan="3" class="text-end"><strong>Total:</strong></td>
-                                        <td><strong>@pago.Carrito.MontoTotal.ToString("C")</strong></td>
+                                        <td class="text-end">
+                                            <strong class="fs-5">@pago.Carrito.MontoTotal.ToString("C")</strong>
+                                        </td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -99,18 +147,30 @@ else
                     }
                     else
                     {
-                        <p class="text-muted">No hay productos en el carrito.</p>
+                        <p class="text-muted text-center py-3">
+                            <i class="fas fa-box-open me-2"></i>No hay productos en el carrito.
+                        </p>
                     }
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="mt-3">
-        <button class="btn btn-secondary" @onclick="Volver">Volver</button>
-        <button class="btn btn-primary" @onclick="Editar">Editar</button>
-        <button class="btn btn-info" @onclick="VerCarrito">Ver Carrito</button>
-        <button class="btn btn-warning" @onclick="CambiarEstado">Cambiar Estado</button>
+    <div class="mt-4">
+        <div class="btn-group" role="group">
+            <button class="btn btn-secondary" @onclick="Volver">
+                <i class="fas fa-arrow-left me-1"></i> Volver
+            </button>
+            <button class="btn btn-warning" @onclick="Editar">
+                <i class="fas fa-pencil-alt me-1"></i> Editar
+            </button>
+            <button class="btn btn-info" @onclick="VerCarrito">
+                <i class="fas fa-shopping-cart me-1"></i> Ver Carrito
+            </button>
+            <button class="btn btn-outline-primary" @onclick="CambiarEstado">
+                <i class="fas fa-exchange-alt me-1"></i> Cambiar Estado
+            </button>
+        </div>
     </div>
 }
 
@@ -133,7 +193,7 @@ else
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error al cargar pago: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error al cargar pago: {ex.Message}");
         }
         finally
         {
@@ -176,7 +236,9 @@ else
     {
         if (pago != null)
         {
-            var nuevoEstado = await JS.InvokeAsync<string>("prompt", "Ingrese el nuevo estado:", pago.EstadoPago);
+            var nuevoEstado = await JS.InvokeAsync<string>("prompt",
+                $"Ingrese el nuevo estado para el pago:",
+                pago.EstadoPago);
 
             if (!string.IsNullOrEmpty(nuevoEstado))
             {
@@ -186,19 +248,64 @@ else
 
                     if (response.IsSuccessStatusCode)
                     {
-                        await JS.InvokeVoidAsync("alert", "Estado del pago actualizado correctamente");
+                        await JS.InvokeVoidAsync("alert", "✅ Estado del pago actualizado correctamente");
                         await CargarPago();
                     }
                     else
                     {
-                        await JS.InvokeVoidAsync("alert", "Error al actualizar el estado del pago");
+                        await JS.InvokeVoidAsync("alert", "❌ Error al actualizar el estado del pago");
                     }
                 }
                 catch (Exception ex)
                 {
-                    await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+                    await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
                 }
             }
         }
+    }
+
+    // Clases para la entidad
+    public class Pago
+    {
+        public int Id { get; set; }
+        public int CarritoId { get; set; }
+        public DateTime FechaPago { get; set; }
+        public string MetodoPago { get; set; } = string.Empty;
+        public decimal MontoPagado { get; set; }
+        public string EstadoPago { get; set; } = string.Empty;
+        public decimal Saldo { get; set; }
+        public Carrito? Carrito { get; set; }
+    }
+
+    public class Carrito
+    {
+        public int Id { get; set; }
+        public Usuario? Usuario { get; set; }
+        public decimal MontoTotal { get; set; }
+        public string Estado { get; set; } = string.Empty;
+        public string EstadoPago { get; set; } = string.Empty;
+        public List<CarritoProducto> CarritoProductos { get; set; } = new();
+    }
+
+    public class Usuario
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class CarritoProducto
+    {
+        public int Id { get; set; }
+        public int ProductoId { get; set; }
+        public int Cantidad { get; set; }
+        public decimal PrecioUnitario { get; set; }
+        public Producto? Producto { get; set; }
+    }
+
+    public class Producto
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
     }
 }

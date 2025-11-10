@@ -39,19 +39,31 @@
                     <input type="text" class="form-control" @bind="filtroProducto"
                            @bind:event="oninput" placeholder="Nombre del producto..." />
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label">Compra:</label>
-                    <input type="number" class="form-control" @bind="filtroCompraId"
-                           @bind:event="oninput" placeholder="ID Compra" />
+                    <select class="form-select" @bind="filtroCompraId">
+                        <option value="0">Todas las compras</option>
+                        @foreach (var compra in compras)
+                        {
+                            <option value="@compra.Id">Compra del @compra.FechaCompra.ToString("dd/MM/yyyy")</option>
+                        }
+                    </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label">Producto:</label>
-                    <input type="number" class="form-control" @bind="filtroProductoId"
-                           @bind:event="oninput" placeholder="ID Producto" />
+                    <select class="form-select" @bind="filtroProductoId">
+                        <option value="0">Todos los productos</option>
+                        @foreach (var producto in productos)
+                        {
+                            <option value="@producto.Id">@producto.Nombre</option>
+                        }
+                    </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button class="btn btn-outline-secondary w-100" @onclick="LimpiarFiltros">
-                        <i class="fas fa-times me-1"></i>Limpiar
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button class="btn btn-outline-secondary" @onclick="LimpiarFiltros">
+                        <i class="fas fa-times me-1"></i>Limpiar Filtros
                     </button>
                 </div>
             </div>
@@ -64,7 +76,7 @@
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
-                    <div class="card-body">
+                    <div class="card-body text-center">
                         <h6 class="card-title">Total Productos</h6>
                         <h4>@estadisticas.TotalProductos</h4>
                     </div>
@@ -72,7 +84,7 @@
             </div>
             <div class="col-md-3">
                 <div class="card bg-success text-white">
-                    <div class="card-body">
+                    <div class="card-body text-center">
                         <h6 class="card-title">Total Unidades</h6>
                         <h4>@estadisticas.TotalUnidades</h4>
                     </div>
@@ -80,7 +92,7 @@
             </div>
             <div class="col-md-3">
                 <div class="card bg-info text-white">
-                    <div class="card-body">
+                    <div class="card-body text-center">
                         <h6 class="card-title">Total Compra</h6>
                         <h4>@estadisticas.TotalCompra.ToString("C2")</h4>
                     </div>
@@ -88,7 +100,7 @@
             </div>
             <div class="col-md-3">
                 <div class="card bg-warning text-white">
-                    <div class="card-body">
+                    <div class="card-body text-center">
                         <h6 class="card-title">Acciones</h6>
                         <button class="btn btn-light btn-sm" @onclick="VerEstadisticasDetalladas">
                             <i class="fas fa-chart-bar me-1"></i>Ver Detalles
@@ -117,7 +129,7 @@
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-table me-2"></i>
-                    Detalles de Compra (@compraDetalles.Count registros)
+                    Detalles de Compra (@compraDetallesFiltrados.Count() registros)
                 </h5>
             </div>
             <div class="card-body p-0">
@@ -125,7 +137,6 @@
                     <table class="table table-striped table-hover mb-0">
                         <thead class="table-dark">
                             <tr>
-                                <th>ID</th>
                                 <th>Compra</th>
                                 <th>Producto</th>
                                 <th>Categoría</th>
@@ -140,14 +151,12 @@
                             @foreach (var detalle in compraDetallesFiltrados)
                             {
                                 <tr>
-                                    <td>@detalle.Id</td>
                                     <td>
-                                        <small class="text-muted">#@detalle.CompraId</small><br>
-                                        <span class="small">@detalle.Compra?.FechaCompra.ToString("dd/MM/yyyy")</span>
+                                        <small class="text-muted">@detalle.Compra?.FechaCompra.ToString("dd/MM/yyyy")</small>
                                     </td>
                                     <td>
                                         <strong>@detalle.Producto?.Nombre</strong><br>
-                                        <small class="text-muted">Código: @detalle.Producto?.Codigo</small>
+                                        <small class="text-muted">@detalle.Producto?.Codigo</small>
                                     </td>
                                     <td>@detalle.Producto?.Categoria?.Nombre</td>
                                     <td class="text-center">
@@ -160,16 +169,13 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <button class="btn btn-outline-primary" @onclick="() => Editar(detalle.Id)"
-                                                    title="Editar">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-outline-info" @onclick="() => VerDetalles(detalle.Id)"
-                                                    title="Ver Detalles">
+                                            <button class="btn btn-info" @onclick="() => VerDetalles(detalle.Id)" title="Ver Detalles">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            <button class="btn btn-outline-danger" @onclick="() => Eliminar(detalle)"
-                                                    title="Eliminar">
+                                            <button class="btn btn-warning" @onclick="() => Editar(detalle.Id)" title="Editar">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                            <button class="btn btn-danger" @onclick="() => Eliminar(detalle)" title="Eliminar">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -181,7 +187,7 @@
                         {
                             <tfoot class="table-secondary">
                                 <tr>
-                                    <td colspan="4" class="text-end fw-bold">TOTAL COMPRA:</td>
+                                    <td colspan="3" class="text-end fw-bold">TOTAL COMPRA:</td>
                                     <td class="text-center fw-bold">@compraDetalles.Sum(x => x.Cantidad)</td>
                                     <td colspan="2"></td>
                                     <td class="text-end fw-bold text-success fs-5">
@@ -202,7 +208,7 @@
             <i class="fas fa-info-circle me-2"></i>
             @if (CompraId > 0)
             {
-                <span>No se encontraron detalles para la compra #@CompraId.</span>
+                <span>No se encontraron detalles para la compra.</span>
             }
             else
             {
@@ -224,7 +230,7 @@
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">
                         <i class="fas fa-chart-bar me-2"></i>
-                        Estadísticas Detalladas - Compra #@CompraId
+                        Estadísticas Detalladas - Compra
                     </h5>
                     <button type="button" class="btn-close btn-close-white" @onclick="CerrarEstadisticas"></button>
                 </div>
@@ -306,11 +312,13 @@
     [Parameter] public int CompraId { get; set; }
 
     private List<CompraDetalle> compraDetalles = new();
+    private List<Compra> compras = new();
+    private List<Producto> productos = new();
     private IEnumerable<CompraDetalle> compraDetallesFiltrados => FiltrarDetalles();
     private bool cargando = true;
     private string filtroProducto = string.Empty;
-    private int? filtroCompraId;
-    private int? filtroProductoId;
+    private int filtroCompraId = 0;
+    private int filtroProductoId = 0;
     private bool mostrarEstadisticasDetalladas = false;
     private EstadisticasCompraResponse? estadisticas;
 
@@ -331,6 +339,15 @@
 
         try
         {
+            // Cargar compras y productos para filtros
+            var comprasTask = Http.GetFromJsonAsync<List<Compra>>("api/Compras");
+            var productosTask = Http.GetFromJsonAsync<List<Producto>>("api/Productos");
+
+            await Task.WhenAll(comprasTask, productosTask);
+
+            compras = comprasTask.Result ?? new List<Compra>();
+            productos = productosTask.Result ?? new List<Producto>();
+
             if (CompraId > 0)
             {
                 // Cargar detalles específicos de una compra
@@ -370,14 +387,14 @@
                 x.Producto?.Codigo?.Contains(filtroProducto, StringComparison.OrdinalIgnoreCase) == true);
         }
 
-        if (filtroCompraId.HasValue && filtroCompraId.Value > 0)
+        if (filtroCompraId > 0)
         {
-            filtrados = filtrados.Where(x => x.CompraId == filtroCompraId.Value);
+            filtrados = filtrados.Where(x => x.CompraId == filtroCompraId);
         }
 
-        if (filtroProductoId.HasValue && filtroProductoId.Value > 0)
+        if (filtroProductoId > 0)
         {
-            filtrados = filtrados.Where(x => x.ProductoId == filtroProductoId.Value);
+            filtrados = filtrados.Where(x => x.ProductoId == filtroProductoId);
         }
 
         return filtrados;
@@ -402,9 +419,10 @@
     private async void Eliminar(CompraDetalle detalle)
     {
         bool confirmado = await JS.InvokeAsync<bool>("confirm",
-            $"¿Está seguro de eliminar el detalle de compra #{detalle.Id}?\n\n" +
+            $"¿Está seguro de eliminar el detalle de compra?\n\n" +
             $"Producto: {detalle.Producto?.Nombre}\n" +
-            $"Cantidad: {detalle.Cantidad}\n\n" +
+            $"Cantidad: {detalle.Cantidad}\n" +
+            $"Precio: {detalle.PrecioCompra.ToString("C2")}\n\n" +
             "Esta acción no se puede deshacer.");
 
         if (confirmado)
@@ -415,17 +433,17 @@
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JS.InvokeVoidAsync("alert", "Detalle de compra eliminado correctamente");
+                    await JS.InvokeVoidAsync("alert", "✅ Detalle de compra eliminado correctamente");
                     await CargarDatos();
                 }
                 else
                 {
-                    await JS.InvokeVoidAsync("alert", "Error al eliminar el detalle de compra");
+                    await JS.InvokeVoidAsync("alert", "❌ Error al eliminar el detalle de compra");
                 }
             }
             catch (Exception ex)
             {
-                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
             }
         }
     }
@@ -433,8 +451,8 @@
     private void LimpiarFiltros()
     {
         filtroProducto = string.Empty;
-        filtroCompraId = null;
-        filtroProductoId = null;
+        filtroCompraId = 0;
+        filtroProductoId = 0;
     }
 
     private void VolverACompras()
@@ -451,6 +469,7 @@
     {
         mostrarEstadisticasDetalladas = false;
     }
+
 
     // Clases para las respuestas
     public class EstadisticasCompraResponse

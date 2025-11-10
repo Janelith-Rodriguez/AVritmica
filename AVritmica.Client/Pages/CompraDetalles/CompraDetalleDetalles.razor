@@ -3,7 +3,7 @@
 @inject NavigationManager Navigation
 @inject HttpClient Http
 
-<PageTitle>AVritmica - Detalles de Compra #@Id</PageTitle>
+<PageTitle>AVritmica - Detalles de Compra</PageTitle>
 
 <div class="container-fluid">
     <div class="row mb-4">
@@ -15,16 +15,16 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="/">Inicio</a></li>
                     <li class="breadcrumb-item"><a href="/compra-detalles">Detalles de Compra</a></li>
-                    <li class="breadcrumb-item active">Detalle #@Id</li>
+                    <li class="breadcrumb-item active">Detalle</li>
                 </ol>
             </nav>
         </div>
         <div class="col-auto">
             <div class="btn-group">
-                <button class="btn btn-outline-primary" @onclick="Editar">
-                    <i class="fas fa-edit me-1"></i>Editar
+                <button class="btn btn-warning" @onclick="Editar">
+                    <i class="fas fa-pencil-alt me-1"></i>Editar
                 </button>
-                <button class="btn btn-outline-secondary" @onclick="Volver">
+                <button class="btn btn-secondary" @onclick="Volver">
                     <i class="fas fa-arrow-left me-1"></i>Volver
                 </button>
             </div>
@@ -57,19 +57,9 @@
                             <div class="col-md-6">
                                 <table class="table table-borderless">
                                     <tr>
-                                        <th class="text-muted" width="40%">ID:</th>
-                                        <td><strong>#@detalle.Id</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted">Compra:</th>
+                                        <th class="text-muted" width="40%">Compra:</th>
                                         <td>
-                                            <a href="/compras/@detalle.CompraId" class="text-decoration-none">
-                                                <strong>Compra #@detalle.CompraId</strong>
-                                            </a>
-                                            <br>
-                                            <small class="text-muted">
-                                                @detalle.Compra?.FechaCompra.ToString("dd/MM/yyyy")
-                                            </small>
+                                            <strong>Compra del @detalle.Compra?.FechaCompra.ToString("dd/MM/yyyy")</strong>
                                         </td>
                                     </tr>
                                     <tr>
@@ -214,16 +204,16 @@
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <button class="btn btn-outline-primary btn-sm" @onclick="Editar">
-                                <i class="fas fa-edit me-1"></i>Editar Detalle
+                            <button class="btn btn-warning btn-sm" @onclick="Editar">
+                                <i class="fas fa-pencil-alt me-1"></i>Editar Detalle
                             </button>
-                            <button class="btn btn-outline-info btn-sm" @onclick="IrAProducto">
+                            <button class="btn btn-info btn-sm" @onclick="IrAProducto">
                                 <i class="fas fa-external-link-alt me-1"></i>Ver Producto
                             </button>
-                            <button class="btn btn-outline-success btn-sm" @onclick="IrACompra">
+                            <button class="btn btn-success btn-sm" @onclick="IrACompra">
                                 <i class="fas fa-receipt me-1"></i>Ver Compra Completa
                             </button>
-                            <button class="btn btn-outline-danger btn-sm" @onclick="Eliminar">
+                            <button class="btn btn-danger btn-sm" @onclick="Eliminar">
                                 <i class="fas fa-trash me-1"></i>Eliminar Detalle
                             </button>
                         </div>

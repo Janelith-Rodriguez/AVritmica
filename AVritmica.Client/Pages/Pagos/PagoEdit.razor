@@ -19,7 +19,7 @@
                     <option value="0">Seleccione un carrito</option>
                     @foreach (var carrito in carritos)
                     {
-                        <option value="@carrito.Id">#@carrito.Id - @carrito.Usuario?.Nombre (Total: @carrito.MontoTotal.ToString("C"))</option>
+                        <option value="@carrito.Id">@carrito.Usuario?.Nombre - Total: @carrito.MontoTotal.ToString("C")</option>
                     }
                 </InputSelect>
                 @if (pagoDTO.CarritoId == 0)
@@ -53,10 +53,11 @@
                 }
                 @if (carritoSeleccionado != null)
                 {
-                    <small class="text-muted">
+                    <div class="form-text">
+                        <i class="fas fa-shopping-cart me-1"></i>
                         Total carrito: @carritoSeleccionado.MontoTotal.ToString("C") |
                         Saldo pendiente: @saldoPendiente.ToString("C")
-                    </small>
+                    </div>
                 }
             </div>
         </div>
@@ -79,25 +80,49 @@
 
             @if (carritoSeleccionado != null)
             {
-                <div class="alert alert-info">
-                    <h6>Información del Carrito</h6>
-                    <p><strong>Usuario:</strong> @carritoSeleccionado.Usuario?.Nombre</p>
-                    <p><strong>Email:</strong> @carritoSeleccionado.Usuario?.Email</p>
-                    <p><strong>Productos:</strong> @carritoSeleccionado.CarritoProductos.Count</p>
-                    <p><strong>Estado:</strong> @carritoSeleccionado.Estado</p>
-                    <p><strong>Estado Pago:</strong> @carritoSeleccionado.EstadoPago</p>
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white py-2">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i> Información del Carrito
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Usuario:</strong> @carritoSeleccionado.Usuario?.Nombre</p>
+                        <p><strong>Email:</strong> @carritoSeleccionado.Usuario?.Email</p>
+                        <p><strong>Productos:</strong> @carritoSeleccionado.CarritoProductos.Count</p>
+                        <p><strong>Estado:</strong> @carritoSeleccionado.Estado</p>
+                        <p><strong>Estado Pago:</strong> @carritoSeleccionado.EstadoPago</p>
+                    </div>
                 </div>
             }
         </div>
     </div>
 
     <div class="mb-3">
-        <button type="submit" class="btn btn-primary" disabled="@guardando">@BotonGuardarTexto</button>
-        <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+        <button type="submit" class="btn btn-primary" disabled="@guardando">
+            @if (guardando)
+            {
+                <span>
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Guardando...
+                </span>
+            }
+            else
+            {
+                <span>
+                    <i class="fas fa-save me-1"></i> @BotonGuardarTexto
+                </span>
+            }
+        </button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancelar" disabled="@guardando">
+            <i class="fas fa-times me-1"></i> Cancelar
+        </button>
 
         @if (EsEdicion)
         {
-            <button type="button" class="btn btn-warning" @onclick="CambiarEstado">Cambiar Estado</button>
+            <button type="button" class="btn btn-warning" @onclick="CambiarEstado">
+                <i class="fas fa-exchange-alt me-1"></i> Cambiar Estado
+            </button>
         }
     </div>
 </EditForm>
@@ -113,7 +138,7 @@
     private bool EsEdicion => Id > 0;
 
     private string Titulo => EsEdicion ? "Editar Pago" : "Nuevo Pago";
-    private string BotonGuardarTexto => guardando ? "Guardando..." : "Guardar";
+    private string BotonGuardarTexto => EsEdicion ? "Actualizar Pago" : "Crear Pago";
 
     protected override async Task OnInitializedAsync()
     {
@@ -139,7 +164,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error al cargar carritos: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error al cargar carritos: {ex.Message}");
         }
     }
 
@@ -165,7 +190,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error al cargar pago: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error al cargar pago: {ex.Message}");
         }
     }
 
@@ -209,19 +234,19 @@
         // Validación del lado del cliente
         if (pagoDTO.CarritoId == 0)
         {
-            await JS.InvokeVoidAsync("alert", "Por favor seleccione un carrito");
+            await JS.InvokeVoidAsync("alert", "❌ Por favor seleccione un carrito");
             return;
         }
 
         if (string.IsNullOrEmpty(pagoDTO.MetodoPago))
         {
-            await JS.InvokeVoidAsync("alert", "Por favor seleccione un método de pago");
+            await JS.InvokeVoidAsync("alert", "❌ Por favor seleccione un método de pago");
             return;
         }
 
         if (pagoDTO.MontoPagado <= 0)
         {
-            await JS.InvokeVoidAsync("alert", "El monto pagado debe ser mayor a 0");
+            await JS.InvokeVoidAsync("alert", "❌ El monto pagado debe ser mayor a 0");
             return;
         }
 
@@ -234,7 +259,6 @@
 
             if (EsEdicion)
             {
-                // Usar clase anónima que coincida exactamente con PagoUpdateRequest
                 var updateRequest = new
                 {
                     Id = Id,
@@ -248,7 +272,6 @@
             }
             else
             {
-                // Usar clase anónima que coincida exactamente con PagoCreateRequest
                 var createRequest = new
                 {
                     CarritoId = pagoDTO.CarritoId,
@@ -262,18 +285,18 @@
 
             if (response.IsSuccessStatusCode)
             {
-                await JS.InvokeVoidAsync("alert", EsEdicion ? "Pago actualizado correctamente" : "Pago creado correctamente");
+                await JS.InvokeVoidAsync("alert", EsEdicion ? "✅ Pago actualizado correctamente" : "✅ Pago creado correctamente");
                 Navigation.NavigateTo("/pagos");
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                await JS.InvokeVoidAsync("alert", $"Error: {error}");
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {error}");
             }
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
         }
         finally
         {
@@ -294,17 +317,17 @@
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JS.InvokeVoidAsync("alert", "Estado del pago actualizado correctamente");
+                    await JS.InvokeVoidAsync("alert", "✅ Estado del pago actualizado correctamente");
                     await CargarPago();
                 }
                 else
                 {
-                    await JS.InvokeVoidAsync("alert", "Error al actualizar el estado del pago");
+                    await JS.InvokeVoidAsync("alert", "❌ Error al actualizar el estado del pago");
                 }
             }
             catch (Exception ex)
             {
-                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
             }
         }
     }
@@ -312,5 +335,61 @@
     private void Cancelar()
     {
         Navigation.NavigateTo("/pagos");
+    }
+
+    // Clases DTO y entidades
+    public class PagoDTO
+    {
+        public int Id { get; set; }
+        public int CarritoId { get; set; }
+        public DateTime FechaPago { get; set; }
+        public string MetodoPago { get; set; } = string.Empty;
+        public decimal MontoPagado { get; set; }
+        public string EstadoPago { get; set; } = string.Empty;
+        public decimal Saldo { get; set; }
+    }
+
+    public class Pago
+    {
+        public int Id { get; set; }
+        public int CarritoId { get; set; }
+        public DateTime FechaPago { get; set; }
+        public string MetodoPago { get; set; } = string.Empty;
+        public decimal MontoPagado { get; set; }
+        public string EstadoPago { get; set; } = string.Empty;
+        public decimal Saldo { get; set; }
+        public Carrito? Carrito { get; set; }
+    }
+
+    public class Carrito
+    {
+        public int Id { get; set; }
+        public Usuario? Usuario { get; set; }
+        public decimal MontoTotal { get; set; }
+        public string Estado { get; set; } = string.Empty;
+        public string EstadoPago { get; set; } = string.Empty;
+        public List<CarritoProducto> CarritoProductos { get; set; } = new();
+    }
+
+    public class Usuario
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class CarritoProducto
+    {
+        public int Id { get; set; }
+        public int ProductoId { get; set; }
+        public int Cantidad { get; set; }
+        public decimal PrecioUnitario { get; set; }
+        public Producto? Producto { get; set; }
+    }
+
+    public class Producto
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
     }
 }

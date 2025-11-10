@@ -21,24 +21,42 @@
             <div class="mb-3">
                 <label for="descripcion" class="form-label">Descripción</label>
                 <InputTextArea id="descripcion" class="form-control" @bind-Value="compraDTO.Descripcion"
-                               placeholder="Descripción de la compra..." />
+                               placeholder="Descripción de la compra..." rows="3" />
+                <div class="form-text">Describe los productos adquiridos en esta compra.</div>
             </div>
         </div>
 
         <div class="col-md-6">
             @if (EsEdicion)
             {
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Estadísticas de la Compra</h6>
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>Estadísticas de la Compra
+                        </h6>
                     </div>
                     <div class="card-body">
-                        <p><strong>Productos:</strong> <span class="badge bg-primary">@cantidadProductos</span></p>
-                        <p><strong>Cantidad Total:</strong> <span class="badge bg-info">@cantidadTotal</span></p>
-                        <p><strong>Total Compra:</strong> <strong class="text-success">@totalCompra.ToString("C")</strong></p>
-                        <div class="d-grid">
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="text-primary">
+                                    <h4>@cantidadProductos</h4>
+                                    <small>Productos</small>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="text-info">
+                                    <h4>@cantidadTotal</h4>
+                                    <small>Unidades</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center border-top pt-3">
+                            <h5 class="text-success">@totalCompra.ToString("C")</h5>
+                            <small class="text-muted">Total de la compra</small>
+                        </div>
+                        <div class="d-grid mt-3">
                             <button type="button" class="btn btn-outline-primary btn-sm" @onclick="VerProductos">
-                                <i class="fas fa-boxes"></i> Ver Productos
+                                <i class="fas fa-boxes me-1"></i> Gestionar Productos
                             </button>
                         </div>
                     </div>
@@ -47,20 +65,40 @@
             else
             {
                 <div class="alert alert-info">
-                    <h6>Información</h6>
-                    <p>Después de crear la compra, podrá agregar los productos en la sección de detalles de compra.</p>
+                    <h6>
+                        <i class="fas fa-info-circle me-2"></i>Información
+                    </h6>
+                    <p class="mb-0">Después de crear la compra, podrá agregar los productos en la sección de detalles de compra.</p>
                 </div>
             }
         </div>
     </div>
 
     <div class="mb-3">
-        <button type="submit" class="btn btn-primary" disabled="@guardando">@BotonGuardarTexto</button>
-        <button type="button" class="btn btn-secondary" @onclick="Cancelar">Cancelar</button>
+        <button type="submit" class="btn btn-primary" disabled="@guardando">
+            @if (guardando)
+            {
+                <span>
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Guardando...
+                </span>
+            }
+            else
+            {
+                <span>
+                    <i class="fas fa-save me-1"></i> @BotonGuardarTexto
+                </span>
+            }
+        </button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancelar" disabled="@guardando">
+            <i class="fas fa-times me-1"></i> Cancelar
+        </button>
 
         @if (EsEdicion)
         {
-            <button type="button" class="btn btn-info" @onclick="ActualizarEstadisticas">Actualizar Estadísticas</button>
+            <button type="button" class="btn btn-outline-info" @onclick="ActualizarEstadisticas" disabled="@guardando">
+                <i class="fas fa-sync-alt me-1"></i> Actualizar Estadísticas
+            </button>
         }
     </div>
 </EditForm>
@@ -76,7 +114,7 @@
     private decimal totalCompra = 0;
 
     private string Titulo => EsEdicion ? "Editar Compra" : "Nueva Compra";
-    private string BotonGuardarTexto => guardando ? "Guardando..." : "Guardar";
+    private string BotonGuardarTexto => EsEdicion ? "Actualizar Compra" : "Crear Compra";
 
     protected override async Task OnInitializedAsync()
     {
@@ -109,7 +147,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error al cargar compra: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error al cargar compra: {ex.Message}");
         }
     }
 
@@ -117,25 +155,13 @@
     {
         try
         {
-            // Obtener cantidad de productos
-            var cantidadResponse = await Http.GetAsync($"api/Compras/cantidad-productos/{Id}");
-            if (cantidadResponse.IsSuccessStatusCode)
-            {
-                cantidadTotal = await cantidadResponse.Content.ReadFromJsonAsync<int>();
-            }
-
-            // Obtener total de la compra
-            var totalResponse = await Http.GetAsync($"api/Compras/total/{Id}");
-            if (totalResponse.IsSuccessStatusCode)
-            {
-                totalCompra = await totalResponse.Content.ReadFromJsonAsync<decimal>();
-            }
-
-            // Obtener compra completa para contar productos únicos
+            // Obtener compra completa para contar productos
             var compra = await Http.GetFromJsonAsync<Compra>($"api/Compras/{Id}");
             if (compra != null)
             {
                 cantidadProductos = compra.CompraDetalles.Count;
+                cantidadTotal = compra.CompraDetalles.Sum(cd => cd.Cantidad);
+                totalCompra = compra.CompraDetalles.Sum(cd => cd.Cantidad * cd.PrecioCompra);
             }
         }
         catch (Exception ex)
@@ -155,7 +181,6 @@
 
             if (EsEdicion)
             {
-                // Usar clase anónima para evitar problemas de validación
                 var updateRequest = new
                 {
                     Id = Id,
@@ -166,7 +191,6 @@
             }
             else
             {
-                // Usar clase anónima para evitar problemas de validación
                 var createRequest = new
                 {
                     FechaCompra = compraDTO.FechaCompra,
@@ -179,24 +203,24 @@
             {
                 if (EsEdicion)
                 {
-                    await JS.InvokeVoidAsync("alert", "Compra actualizada correctamente");
+                    await JS.InvokeVoidAsync("alert", "✅ Compra actualizada correctamente");
                 }
                 else
                 {
                     var compraId = await response.Content.ReadFromJsonAsync<int>();
-                    await JS.InvokeVoidAsync("alert", "Compra creada correctamente");
+                    await JS.InvokeVoidAsync("alert", "✅ Compra creada correctamente");
                 }
                 Navigation.NavigateTo("/compras");
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                await JS.InvokeVoidAsync("alert", $"Error: {error}");
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {error}");
             }
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
         }
         finally
         {
@@ -209,15 +233,56 @@
     {
         await CargarEstadisticas();
         StateHasChanged();
+        await JS.InvokeVoidAsync("alert", "✅ Estadísticas actualizadas");
     }
 
     private void VerProductos()
     {
-        Navigation.NavigateTo($"/compra-detalles?compraId={Id}");
+        Navigation.NavigateTo($"/compra-detalles/{Id}");
     }
 
     private void Cancelar()
     {
         Navigation.NavigateTo("/compras");
+    }
+
+    // Clases para la entidad
+    public class Compra
+    {
+        public int Id { get; set; }
+        public DateTime FechaCompra { get; set; }
+        public string? Descripcion { get; set; }
+        public List<CompraDetalle> CompraDetalles { get; set; } = new();
+    }
+
+    public class CompraDetalle
+    {
+        public int Id { get; set; }
+        public int CompraId { get; set; }
+        public int ProductoId { get; set; }
+        public int Cantidad { get; set; }
+        public decimal PrecioCompra { get; set; }
+        public Producto? Producto { get; set; }
+    }
+
+    public class Producto
+    {
+        public int Id { get; set; }
+        public string? Nombre { get; set; }
+        public string? Descripcion { get; set; }
+        public Categoria? Categoria { get; set; }
+    }
+
+    public class Categoria
+    {
+        public int Id { get; set; }
+        public string? Nombre { get; set; }
+    }
+
+    public class CompraDTO
+    {
+        public int Id { get; set; }
+        public DateTime FechaCompra { get; set; }
+        public string? Descripcion { get; set; }
     }
 }

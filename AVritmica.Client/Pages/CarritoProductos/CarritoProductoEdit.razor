@@ -19,7 +19,7 @@
                     <option value="0">Seleccione un carrito</option>
                     @foreach (var carrito in carritos)
                     {
-                        <option value="@carrito.Id">#@carrito.Id - @carrito.Usuario?.Nombre (@carrito.Estado)</option>
+                        <option value="@carrito.Id">@carrito.Usuario?.Nombre (@carrito.Estado)</option>
                     }
                 </InputSelect>
                 @if (carritoProductoDTO.CarritoId == 0)

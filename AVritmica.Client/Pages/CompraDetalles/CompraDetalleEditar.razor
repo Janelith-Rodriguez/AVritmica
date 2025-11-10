@@ -19,7 +19,7 @@
                     @if (CompraIdParam > 0)
                     {
                         <li class="breadcrumb-item">
-                            <a href="/compra-detalles/@CompraIdParam">Compra #@CompraIdParam</a>
+                            <a href="/compra-detalles/@CompraIdParam">Compra</a>
                         </li>
                     }
                     <li class="breadcrumb-item active">@AccionActual</li>
@@ -53,7 +53,10 @@
                                 <label for="compra" class="form-label required">Compra</label>
                                 @if (CompraIdParam > 0 && Id == 0)
                                 {
-                                    <input type="text" class="form-control" value="Compra #@CompraIdParam" disabled />
+                                    <input type="text"
+										   class="form-control"
+										   value="Compra del @CompraSeleccionada?.FechaCompra.ToString("dd/MM/yyyy")"
+										   disabled />
                                     <input type="hidden" @bind="detalle.CompraId" />
                                 }
                                 else
@@ -63,7 +66,7 @@
                                         <option value="0">Seleccione una compra...</option>
                                         @foreach (var compra in compras)
                                         {
-                                            <option value="@compra.Id">Compra #@compra.Id - @compra.FechaCompra.ToString("dd/MM/yyyy")</option>
+                                            <option value="@compra.Id">Compra del @compra.FechaCompra.ToString("dd/MM/yyyy")</option>
                                         }
                                     </select>
                                     <div class="form-text">
@@ -85,7 +88,7 @@
                                     <option value="0">Seleccione un producto...</option>
                                     @foreach (var producto in productos)
                                     {
-                                        <option value="@producto.Id">@producto.Nombre</option>
+                                        <option value="@producto.Id">@producto.Nombre - @producto.Categoria?.Nombre</option>
                                     }
                                 </select>
                                 <div class="form-text">
@@ -102,9 +105,9 @@
                                     {
                                         <div class="small">
                                             <strong>@productoSeleccionado.Nombre</strong><br>
-                                            <span class="text-muted">Descripción: @productoSeleccionado.Descripcion</span><br>
+                                            <span class="text-muted">@productoSeleccionado.Descripcion</span><br>
                                             <span class="text-muted">Categoría: @productoSeleccionado.Categoria?.Nombre</span><br>
-                                            <span class="text-muted">Stock: @productoSeleccionado.Stock</span>
+                                            <span class="text-muted">Stock: @productoSeleccionado.Stock unidades</span>
                                         </div>
                                     }
                                     else
@@ -430,4 +433,7 @@
         public bool Existe { get; set; }
         public string Mensaje { get; set; } = string.Empty;
     }
+
+    // Propiedad calculada para obtener la compra seleccionada
+    private Compra? CompraSeleccionada => compras.FirstOrDefault(c => c.Id == detalle.CompraId);
 }

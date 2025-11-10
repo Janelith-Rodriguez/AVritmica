@@ -5,33 +5,48 @@
 
 @if (cargando)
 {
-    <div class="text-center">
+    <div class="text-center py-4">
         <div class="spinner-border" role="status">
             <span class="visually-hidden">Cargando...</span>
         </div>
+        <p class="mt-2">Cargando consulta...</p>
     </div>
 }
 else if (consulta == null)
 {
-    <div class="alert alert-danger">
+    <div class="alert alert-danger text-center">
+        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
         <h4>Consulta no encontrada</h4>
-        <p>La consulta solicitada no existe.</p>
-        <button class="btn btn-primary" @onclick="VolverALista">Volver a la lista</button>
+        <p>La consulta solicitada no existe o fue eliminada.</p>
+        <button class="btn btn-primary" @onclick="VolverALista">
+            <i class="fas fa-arrow-left me-1"></i> Volver a la lista
+        </button>
     </div>
 }
 else
 {
     <div class="row mb-4">
         <div class="col-md-8">
-            <h3>Consulta #@consulta.Id</h3>
+            <h3>
+                <i class="fas fa-envelope me-2 text-primary"></i>Consulta de @consulta.Nombre
+            </h3>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="/consultas">Consultas</a></li>
+                    <li class="breadcrumb-item active">Consulta</li>
+                </ol>
+            </nav>
         </div>
         <div class="col-md-4 text-end">
-            <button class="btn btn-secondary" @onclick="VolverALista">
-                <i class="fas fa-arrow-left"></i> Volver
-            </button>
-            <button class="btn btn-warning" @onclick="EditarConsulta">
-                <i class="fas fa-edit"></i> Editar
-            </button>
+            <div class="btn-group" role="group">
+                <button class="btn btn-secondary" @onclick="VolverALista">
+                    <i class="fas fa-arrow-left me-1"></i> Volver
+                </button>
+                <button class="btn btn-warning" @onclick="EditarConsulta">
+                    <i class="fas fa-pencil-alt me-1"></i> Editar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -39,11 +54,13 @@ else
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Mensaje de la Consulta</h5>
-                    @if (!(consulta.Leida ?? false)) // CORREGIDO
+                    <h5 class="mb-0">
+                        <i class="fas fa-comment me-2"></i> Mensaje de la Consulta
+                    </h5>
+                    @if (!(consulta.Leida ?? false))
                     {
                         <button class="btn btn-sm btn-success" @onclick="MarcarComoLeida">
-                            <i class="fas fa-check"></i> Marcar como Leída
+                            <i class="fas fa-check me-1"></i> Marcar como Leída
                         </button>
                     }
                 </div>
@@ -57,7 +74,7 @@ else
 
                     <div class="text-end">
                         <button class="btn btn-primary" @onclick="ResponderConsulta">
-                            <i class="fas fa-reply"></i> Responder por Email
+                            <i class="fas fa-reply me-1"></i> Responder por Email
                         </button>
                     </div>
                 </div>
@@ -67,7 +84,9 @@ else
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">Información del Contacto</h5>
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i> Información del Contacto
+                    </h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-borderless">
@@ -79,7 +98,7 @@ else
                             <th>Email:</th>
                             <td>
                                 <a href="mailto:@consulta.Email" class="text-decoration-none">
-                                    <i class="fas fa-envelope"></i> @consulta.Email
+                                    <i class="fas fa-envelope me-1"></i> @consulta.Email
                                 </a>
                             </td>
                         </tr>
@@ -90,13 +109,17 @@ else
                         <tr>
                             <th>Estado:</th>
                             <td>
-                                @if (consulta.Leida ?? false) // CORREGIDO
+                                @if (consulta.Leida ?? false)
                                 {
-                                    <span class="badge bg-success">Leída</span>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Leída
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-warning">No Leída</span>
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-clock me-1"></i>No Leída
+                                    </span>
                                 }
                             </td>
                         </tr>
@@ -119,18 +142,20 @@ else
 
             <div class="card mt-3">
                 <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">Acciones Rápidas</h5>
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i> Acciones Rápidas
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         <button class="btn btn-outline-primary" @onclick="ResponderConsulta">
-                            <i class="fas fa-reply"></i> Responder
+                            <i class="fas fa-reply me-1"></i> Responder
                         </button>
                         <button class="btn btn-outline-warning" @onclick="EditarConsulta">
-                            <i class="fas fa-edit"></i> Editar
+                            <i class="fas fa-edit me-1"></i> Editar
                         </button>
                         <button class="btn btn-outline-danger" @onclick="EliminarConsulta">
-                            <i class="fas fa-trash"></i> Eliminar
+                            <i class="fas fa-trash me-1"></i> Eliminar
                         </button>
                     </div>
                 </div>
@@ -157,7 +182,7 @@ else
         {
             consulta = await Http.GetFromJsonAsync<Consulta>($"api/Consultas/{Id}");
 
-            // Si la consulta no está leída, marcarla como leída al verla - CORREGIDO
+            // Si la consulta no está leída, marcarla como leída al verla
             if (consulta != null && !(consulta.Leida ?? false))
             {
                 await Http.PostAsync($"api/Consultas/marcar-leida/{Id}", null);
@@ -166,9 +191,13 @@ else
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error al cargar consulta: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error al cargar consulta: {ex.Message}");
         }
-        cargando = false;
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
     }
 
     private async Task MarcarComoLeida()
@@ -181,22 +210,22 @@ else
             {
                 consulta!.Leida = true;
                 StateHasChanged();
-                await JS.InvokeVoidAsync("alert", "Consulta marcada como leída");
+                await JS.InvokeVoidAsync("alert", "✅ Consulta marcada como leída");
             }
             else
             {
-                await JS.InvokeVoidAsync("alert", "Error al marcar la consulta como leída");
+                await JS.InvokeVoidAsync("alert", "❌ Error al marcar la consulta como leída");
             }
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
         }
     }
 
     private async Task ResponderConsulta()
     {
-        var asunto = $"Re: Consulta #{consulta!.Id} - AVritmica";
+        var asunto = $"Re: Consulta de {consulta!.Nombre} - AVritmica";
         var cuerpo = $"\n\n----------------------------------------\nConsulta original de {consulta.Nombre}:\n{consulta.Mensaje}";
 
         var mailtoLink = $"mailto:{consulta.Email}?subject={Uri.EscapeDataString(asunto)}&body={Uri.EscapeDataString(cuerpo)}";
@@ -211,7 +240,7 @@ else
     private async Task EliminarConsulta()
     {
         var confirmado = await JS.InvokeAsync<bool>("confirm",
-            $"¿Está seguro de eliminar la consulta de {consulta!.Nombre}?");
+            $"¿Está seguro de eliminar la consulta de {consulta!.Nombre}?\n\nEmail: {consulta.Email}\nFecha: {consulta.FechaEnvio.ToString("dd/MM/yyyy HH:mm")}\n\nEsta acción no se puede deshacer.");
 
         if (confirmado)
         {
@@ -221,17 +250,17 @@ else
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JS.InvokeVoidAsync("alert", "Consulta eliminada correctamente");
+                    await JS.InvokeVoidAsync("alert", "✅ Consulta eliminada correctamente");
                     VolverALista();
                 }
                 else
                 {
-                    await JS.InvokeVoidAsync("alert", "Error al eliminar la consulta");
+                    await JS.InvokeVoidAsync("alert", "❌ Error al eliminar la consulta");
                 }
             }
             catch (Exception ex)
             {
-                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
             }
         }
     }
@@ -239,5 +268,24 @@ else
     private void VolverALista()
     {
         Navigation.NavigateTo("/consultas");
+    }
+
+    // Clases para la entidad
+    public class Consulta
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Mensaje { get; set; } = string.Empty;
+        public DateTime FechaEnvio { get; set; }
+        public bool? Leida { get; set; }
+        public Usuario? Usuario { get; set; }
+    }
+
+    public class Usuario
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
     }
 }

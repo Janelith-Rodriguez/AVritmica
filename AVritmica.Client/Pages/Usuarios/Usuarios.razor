@@ -16,8 +16,12 @@
 else
 {
     <div class="mb-3">
-        <button class="btn btn-primary" @onclick="NuevoUsuario">Nuevo Usuario</button>
-        <button class="btn btn-outline-secondary" @onclick="Refrescar">Refrescar</button>
+        <button class="btn btn-primary" @onclick="NuevoUsuario">
+            <i class="fas fa-plus"></i> Nuevo Usuario
+        </button>
+        <button class="btn btn-outline-secondary" @onclick="Refrescar">
+            <i class="fas fa-sync-alt"></i> Refrescar
+        </button>
     </div>
 
     <div class="row mb-3">
@@ -33,7 +37,9 @@ else
             </select>
         </div>
         <div class="col-md-3">
-            <button class="btn btn-info w-100" @onclick="ExportarUsuarios">Exportar Lista</button>
+            <button class="btn btn-info w-100" @onclick="ExportarUsuarios">
+                <i class="fas fa-download"></i> Exportar Lista
+            </button>
         </div>
     </div>
 
@@ -43,7 +49,6 @@ else
             <table class="table table-striped table-hover">
                 <thead class="table-dark">
                     <tr>
-                        <th>ID</th>
                         <th>Nombre Completo</th>
                         <th>Email</th>
                         <th>Teléfono</th>
@@ -56,31 +61,60 @@ else
                     @foreach (var usuario in usuariosFiltrados)
                     {
                         <tr>
-                            <td>@usuario.Id</td>
                             <td>
                                 <strong>@usuario.Nombre @usuario.Apellido</strong>
+                                @if (!string.IsNullOrEmpty(usuario.Direccion))
+                                {
+                                    <br />
+                                    <small class="text-muted">
+                                        <i class="fas fa-map-marker-alt"></i> @usuario.Direccion
+                                    </small>
+                                }
                             </td>
-                            <td>@usuario.Email</td>
-                            <td>@(string.IsNullOrEmpty(usuario.Telefono) ? "No especificado" : usuario.Telefono)</td>
+                            <td>
+                                <i class="fas fa-envelope text-muted me-1"></i>@usuario.Email
+                            </td>
+                            <td>
+                                @if (string.IsNullOrEmpty(usuario.Telefono))
+                                {
+                                    <span class="text-muted">No especificado</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-phone text-muted me-1"></i>
+                                    @usuario.Telefono
+                                }
+                            </td>
                             <td>
                                 <span class="badge @GetTipoUsuarioBadgeClass(usuario.TipoUsuario)">@usuario.TipoUsuario</span>
                             </td>
                             <td>
-                                <span class="badge bg-secondary">@usuario.Carritos.Count</span>
+                                @if (usuario.Carritos.Count > 0)
+                                {
+                                    <span class="badge bg-primary" title="@usuario.Carritos.Count carritos">
+                                        <i class="fas fa-shopping-cart"></i> @usuario.Carritos.Count
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Sin carritos</span>
+                                }
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-info" @onclick="() => VerDetalles(usuario.Id)" title="Ver detalles">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-warning" @onclick="() => EditarUsuario(usuario.Id)" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" @onclick="() => EliminarUsuario(usuario)" title="Eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-primary" @onclick="() => CambiarTipoUsuario(usuario)" title="Cambiar tipo">
-                                    <i class="fas fa-user-cog"></i>
-                                </button>
+                                <div class="btn-group-vertical btn-group-sm" role="group">
+                                    <!-- Botón Ver Detalles con ojo -->
+                                    <button class="btn btn-info" @onclick="() => VerDetalles(usuario.Id)" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <!-- Botón Editar con lápiz -->
+                                    <button class="btn btn-warning" @onclick="() => EditarUsuario(usuario.Id)" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <!-- Botón Eliminar con tacho de basura -->
+                                    <button class="btn btn-danger" @onclick="() => EliminarUsuario(usuario)" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -89,13 +123,25 @@ else
         </div>
 
         <div class="alert alert-info">
-            <strong>Total de usuarios:</strong> @usuariosFiltrados.Count
+            <i class="fas fa-users me-2"></i>
+            <strong>Total de usuarios:</strong> @usuariosFiltrados.Count |
+            <strong>Clientes:</strong> @usuariosFiltrados.Count(u => u.TipoUsuario == "Cliente") |
+            <strong>Administradores:</strong> @usuariosFiltrados.Count(u => u.TipoUsuario == "Administrador") |
+            <strong>Vendedores:</strong> @usuariosFiltrados.Count(u => u.TipoUsuario == "Vendedor")
         </div>
     }
     else
     {
-        <div class="alert alert-info">
-            No se encontraron usuarios.
+        <div class="alert alert-info text-center">
+            <i class="fas fa-users fa-3x mb-3 text-muted"></i>
+            <h4>No se encontraron usuarios</h4>
+            <p>@(usuarios.Any() ? "No hay usuarios que coincidan con los filtros aplicados." : "No hay usuarios registrados en el sistema.")</p>
+            @if (!usuarios.Any())
+            {
+                <button class="btn btn-primary" @onclick="NuevoUsuario">
+                    <i class="fas fa-plus"></i> Registrar Primer Usuario
+                </button>
+            }
         </div>
     }
 }
@@ -124,7 +170,7 @@ else
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error al cargar usuarios: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error al cargar usuarios: {ex.Message}");
         }
         finally
         {
@@ -164,7 +210,7 @@ else
         return tipoUsuario switch
         {
             "Administrador" => "bg-danger",
-            "Vendedor" => "bg-warning",
+            "Vendedor" => "bg-warning text-dark",
             "Cliente" => "bg-success",
             _ => "bg-secondary"
         };
@@ -188,7 +234,11 @@ else
     private async Task EliminarUsuario(Usuario usuario)
     {
         bool confirmado = await JS.InvokeAsync<bool>("confirm",
-            $"¿Está seguro de eliminar al usuario {usuario.Nombre} {usuario.Apellido}?");
+            $"¿Está seguro de eliminar al usuario?\n\n" +
+            $"👤 {usuario.Nombre} {usuario.Apellido}\n" +
+            $"📧 {usuario.Email}\n" +
+            $"🎯 {usuario.TipoUsuario}\n\n" +
+            "Esta acción no se puede deshacer.");
 
         if (confirmado)
         {
@@ -198,46 +248,18 @@ else
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await JS.InvokeVoidAsync("alert", "Usuario eliminado correctamente");
+                    await JS.InvokeVoidAsync("alert", "✅ Usuario eliminado correctamente");
                     await CargarUsuarios();
                 }
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
-                    await JS.InvokeVoidAsync("alert", $"Error al eliminar usuario: {error}");
+                    await JS.InvokeVoidAsync("alert", $"❌ Error al eliminar usuario: {error}");
                 }
             }
             catch (Exception ex)
             {
-                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
-            }
-        }
-    }
-
-    private async Task CambiarTipoUsuario(Usuario usuario)
-    {
-        var nuevoTipo = await JS.InvokeAsync<string>("prompt",
-            "Ingrese el nuevo tipo de usuario:", usuario.TipoUsuario);
-
-        if (!string.IsNullOrEmpty(nuevoTipo))
-        {
-            try
-            {
-                var response = await Http.PostAsJsonAsync($"api/Usuarios/actualizar-tipo-usuario/{usuario.Id}", nuevoTipo);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    await JS.InvokeVoidAsync("alert", "Tipo de usuario actualizado correctamente");
-                    await CargarUsuarios();
-                }
-                else
-                {
-                    await JS.InvokeVoidAsync("alert", "Error al actualizar el tipo de usuario");
-                }
-            }
-            catch (Exception ex)
-            {
-                await JS.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+                await JS.InvokeVoidAsync("alert", $"❌ Error: {ex.Message}");
             }
         }
     }
@@ -248,7 +270,6 @@ else
         {
             var usuariosExportar = usuariosFiltrados.Select(u => new
             {
-                ID = u.Id,
                 Nombre = u.Nombre,
                 Apellido = u.Apellido,
                 Email = u.Email,
@@ -265,16 +286,17 @@ else
             });
 
             await JS.InvokeVoidAsync("descargarArchivo", "usuarios.json", json);
-            await JS.InvokeVoidAsync("alert", "Lista de usuarios exportada correctamente");
+            await JS.InvokeVoidAsync("alert", "✅ Lista de usuarios exportada correctamente");
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Error al exportar: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"❌ Error al exportar: {ex.Message}");
         }
     }
 
     private async Task Refrescar()
     {
         await CargarUsuarios();
+        await JS.InvokeVoidAsync("alert", "✅ Lista de usuarios actualizada");
     }
 }

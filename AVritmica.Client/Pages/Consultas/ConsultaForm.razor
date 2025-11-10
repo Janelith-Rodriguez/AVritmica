@@ -12,7 +12,9 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h3 class="card-title mb-0">@Titulo</h3>
+                    <h3 class="card-title mb-0">
+                        <i class="fas @IconoTitulo me-2"></i>@Titulo
+                    </h3>
                 </div>
                 <div class="card-body">
                     <EditForm Model="consultaDto" OnValidSubmit="GuardarConsulta">
@@ -41,14 +43,17 @@
                             <InputTextArea @bind-Value="consultaDto.Mensaje" class="form-control"
                                            placeholder="Describa su consulta, pregunta o comentario..."
                                            rows="6" />
-                            <div class="form-text">Caracteres: @(consultaDto.Mensaje?.Length ?? 0)</div>
+                            <div class="form-text">
+                                <i class="fas fa-text-height me-1"></i>
+                                Caracteres: @(consultaDto.Mensaje?.Length ?? 0)
+                            </div>
                             <ValidationMessage For="@(() => consultaDto.Mensaje)" />
                         </div>
 
                         @if (!string.IsNullOrEmpty(mensajeError))
                         {
                             <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-triangle"></i> @mensajeError
+                                <i class="fas fa-exclamation-triangle me-2"></i> @mensajeError
                             </div>
                         }
 
@@ -60,9 +65,9 @@
                                 }
                                 else
                                 {
-                                    <i class="fas fa-paper-plane me-2"></i>
+                                    <i class="fas @IconoBoton me-2"></i>
                                 }
-                                @(esEdicion ? "Actualizar Consulta" : "Enviar Consulta")
+                                @TextoBoton
                             </button>
                             <button type="button" class="btn btn-secondary" @onclick="Cancelar" disabled="@cargando">
                                 <i class="fas fa-times me-2"></i> Cancelar
@@ -82,6 +87,9 @@
     private bool cargando = false;
     private bool esEdicion => Id > 0;
     private string Titulo => esEdicion ? "Editar Consulta" : "Nueva Consulta";
+    private string IconoTitulo => esEdicion ? "fa-edit" : "fa-envelope";
+    private string IconoBoton => esEdicion ? "fa-save" : "fa-paper-plane";
+    private string TextoBoton => esEdicion ? "Actualizar Consulta" : "Enviar Consulta";
     private string mensajeError = "";
 
     protected override async Task OnInitializedAsync()
@@ -109,7 +117,7 @@
         }
         catch (Exception ex)
         {
-            mensajeError = $"Error al cargar la consulta: {ex.Message}";
+            mensajeError = $"❌ Error al cargar la consulta: {ex.Message}";
         }
     }
 
@@ -137,7 +145,7 @@
                 }
                 else
                 {
-                    mensajeError = "No se encontró la consulta a editar";
+                    mensajeError = "❌ No se encontró la consulta a editar";
                     cargando = false;
                     StateHasChanged();
                     return;
@@ -152,7 +160,7 @@
             if (response.IsSuccessStatusCode)
             {
                 var mensaje = esEdicion ?
-                    "Consulta actualizada correctamente" :
+                    "✅ Consulta actualizada correctamente" :
                     "✅ Consulta enviada correctamente. Nos pondremos en contacto pronto.";
 
                 await JS.InvokeVoidAsync("alert", mensaje);
@@ -178,5 +186,31 @@
     private void Cancelar()
     {
         Navigation.NavigateTo("/consultas");
+    }
+
+    // Clases DTO
+    public class CrearConsultaDTO
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Mensaje { get; set; } = string.Empty;
+    }
+
+    public class Consulta
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Mensaje { get; set; } = string.Empty;
+        public DateTime FechaEnvio { get; set; }
+        public bool? Leida { get; set; }
+        public Usuario? Usuario { get; set; }
+    }
+
+    public class Usuario
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
     }
 }
